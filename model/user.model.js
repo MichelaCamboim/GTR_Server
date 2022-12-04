@@ -11,7 +11,6 @@ const userSchema = new Schema(
       type: String,
       required: true,
       trim: true,
-      match: /^[a-z0-9_-]{3,15}$/,
     },
     admissao: {
       type: Date,
@@ -26,6 +25,7 @@ const userSchema = new Schema(
     email: {
       type: String,
       unique: true,
+      required: true,
       lowercase: true,
       match: /[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+/,
     },
