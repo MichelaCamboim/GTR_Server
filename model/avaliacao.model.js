@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 
 const avaliacaoSchema = new Schema(
   {
-    servidor: { type: Schema.Types.ObjectId, ref: "User" },
+    user: { type: Schema.Types.ObjectId, ref: "User" },
     periodo_referencia: {
       type: String,
       enum: ["mensal", "trimestral", "semestral", "anual", "outra"],
