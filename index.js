@@ -5,10 +5,12 @@ import userRoute from "./routes/user.routes.js";
 import avaliacaoRoute from "./routes/avaliacao.routes.js";
 import taskRoute from "./routes/task.routes.js";
 import chatbotRoute from "./routes/chatbot.routes.js";
+import cors from "cors";
 
 dotenv.config();
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 connect();
 
