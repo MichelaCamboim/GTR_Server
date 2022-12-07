@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 
+
 const avaliacaoSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User" },

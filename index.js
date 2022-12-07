@@ -8,11 +8,11 @@ import chatbotRoute from "./routes/chatbot.routes.js";
 import cors from "cors";
 
 dotenv.config();
-const app = express();
-app.use(express.json());
-app.use(cors());
-
 connect();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
 
 app.use("/user", userRoute);
 app.use("/task", taskRoute);

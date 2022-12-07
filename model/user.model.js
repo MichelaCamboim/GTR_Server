@@ -5,7 +5,6 @@ const userSchema = new Schema(
     matricula: {
       type: Number,
       unique: true,
-      required: true,
     },
     nome: {
       type: String,
@@ -26,16 +25,16 @@ const userSchema = new Schema(
       type: String,
       unique: true,
       required: true,
-      lowercase: true,
-      match: /[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+/,
+      trim: true,
+      match: /[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+/gm,
     },
     telefone: {
       type: Number,
-      required: true,
       match: /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
     },
     fusoHorario: { type: Number },
     jornada: { type: Number },
+    codUser: { type: Number },
     departamento: {
       type: String,
       trim: true,
@@ -46,9 +45,19 @@ const userSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["ativo", "férias", "licença", "inativo"],
-      default: "ativo",
+      enum: ["Ativo", "Férias", "Licença"],
+      default: "Ativo",
     },
+    inativo: {
+      type: Boolean,
+      default: false,
+    },
+    acesso: {
+      type: String,
+      enum: ["ADMIN", "USER"],
+      default: "USER",
+    },
+    passwordHash: { type: String, required: true },
     habilidades: [{ type: String }],
     avaliacao: [{ type: Schema.Types.ObjectId, ref: "Avaliacao" }],
     tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
