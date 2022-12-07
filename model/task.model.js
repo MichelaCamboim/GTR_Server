@@ -31,8 +31,8 @@ const taskSchema = new Schema(
       type: String,
       trim: true,
       lowercase: true,
-      enum: ["alta", "média", "baixa"],
-      default: "média",
+      enum: ["alta", "media", "baixa"],
+      default: "media",
     },
     periodicidade: {
       type: String,
@@ -46,10 +46,12 @@ const taskSchema = new Schema(
       validate: {
         validator: function (v) {
           let periodicidade = this.get("periodicidade").trim().toLowerCase();
-          if (periodicidade === "unica" && periodicidade === "diaria")
+          if (periodicidade === "unica" || periodicidade === "diaria")
             return true;
-          if (periodicidade === "semanal" && Array.isArray(v)) {
-            return v.every((item) => {
+          if (periodicidade === "semanal") {
+            if (!Array.isArray(v))
+              throw new Error("Experava-se uma array aqui.");
+            let isOk = v.every((item) => {
               return (
                 typeof item === "string" &&
                 item.trim().toLowerCase() in
@@ -64,11 +66,23 @@ const taskSchema = new Schema(
                   }
               );
             });
+            if (!isOk)
+              throw new Error(
+                "Experava-se uma array vazia ou contendo os dias da semana."
+              );
+            else return true;
           }
-          if (periodicidade === "mensal" && typeof +v === "number") {
-            return +v > 0 && +v < 32;
+          if (periodicidade === "mensal") {
+            if (typeof +v !== "number")
+              throw new Error("Experava-se um número.");
+            if (+v <= 0 || +v >= 32)
+              throw new Error("Experava-se um número entre 1 e 31.");
+            return true;
           }
+          // should never reach here
+          return false;
         },
+        message: "Erro na validação de detalhesPeriodicidade.",
       },
     },
     inicio: {
@@ -76,8 +90,16 @@ const taskSchema = new Schema(
       trim: true,
       validate: {
         validator: function (v) {
-          if (!dateRegex.test(v) || isNaN(new Date(v).getTime())) return false;
-          return new Date(v).toDateString() === new Date().toDateString();
+          if (!dateRegex.test(v) || isNaN(new Date(v).getTime()))
+            throw new Error(`Data inválida: ${v}`);
+          if (
+            new Date(v).toISOString().split("T")[0] !==
+            new Date().toISOString().split("T")[0]
+          ) {
+            throw new Error("A data de início deve ser hoje.");
+          }
+
+          return true;
         },
       },
       default: () => new Date().toISOString().split("T")[0],
@@ -88,6 +110,7 @@ const taskSchema = new Schema(
       validate: {
         validator: (v) =>
           /^(?:(?:[0-1][0-9])|(?:2[0-3])):(?:[0-5][0-9])$/.test(v),
+        message: "Tempo estimado HH:MM. String informada é inválida: {VALUE}",
       },
     },
     prazoFinal: {
@@ -95,8 +118,13 @@ const taskSchema = new Schema(
       trim: true,
       validate: {
         validator: function (v) {
-          if (!dateRegex.test(v) || isNaN(new Date(v).getTime())) return false;
-          return new Date(v) > new Date(this.get("inicio"));
+          if (!dateRegex.test(v) || isNaN(new Date(v).getTime()))
+            throw new Error(`Data inválida: ${v}`);
+          if (new Date(v) <= new Date(this.get("inicio")))
+            throw new Error(
+              "A data de prazo final deve ser maior que a data de início."
+            );
+          return true;
         },
       },
       default: () => new Date().toISOString().split("T")[0],
