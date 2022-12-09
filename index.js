@@ -2,7 +2,7 @@ import express from "express";
 import * as dotenv from "dotenv";
 import connect from "./config/db.config.js";
 import userRoute from "./routes/user.routes.js";
-import avaliacaoRoute from "./routes/avaliacao.routes.js";
+import reportRoute from "./routes/report.routes.js";
 import taskRoute from "./routes/task.routes.js";
 import chatbotRoute from "./routes/chatbot.routes.js";
 import cors from "cors";
@@ -16,7 +16,7 @@ app.use(express.json());
 
 app.use("/user", userRoute);
 app.use("/task", taskRoute);
-app.use("/avaliacao", avaliacaoRoute);
+app.use("/report", reportRoute);
 app.use("/chatbot", chatbotRoute);
 
 app.listen(process.env.PORT, () => {
