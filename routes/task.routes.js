@@ -2,35 +2,60 @@ import express from "express";
 import mongoose from "mongoose";
 import TaskModel from "../model/task.model.js";
 import UserModel from "../model/user.model.js";
+import isAdmin from "../middleware/isAdmin.js";
 
 const taskRoute = express.Router();
 
-taskRoute.post("/new", async (req, res) => {
+taskRoute.post("/new", isAuth, attachCurrentUser, async (req, res) => {
   try {
-    const task = await TaskModel.create(req.body);
+    const task = await TaskModel.create({
+      ...req.body,
+      author: req.currentUser._id,
+    });
 
     try {
       await UserModel.updateMany(
-        { _id: { $in: task.membros } },
+        { _id: { $in: task.members } },
         { $push: { tasks: task._id } },
         { runValidators: true }
       );
     } catch (error) {
+      console.log("failed to push the task to users tasks");
       return res.status(500).json({ message: error.errors });
     }
 
-    return res.status(201).json(task);
+    return res.status(201).json({ msg: "The task successfuly created." });
   } catch (error) {
+    console.log("failed to create a new task");
     return res.status(400).json(error.errors);
   }
 });
 
-taskRoute.get("/all", async (_, res) => {
+taskRoute.get("/all", isAuth, attachCurrentUser, async (_, res) => {
+  let ids;
+
+  if (req.user.role === "user") {
+    // get user tasks ids
+    ids = req.user.role;
+  } else {
+    // get supervisor's subordinates tasks ids
+    users = req.user.subordinates;
+
+    if (!users)
+      return res.status(400).json({ msg: "User doesn't have subordinates" });
+
+    let tasks = await UserModel.find({ _id: { $in: users } }, { tasks: 1 });
+    ids = tasks.reduce((acc, { tasks }) => {
+      acc.push(...tasks);
+      return acc;
+    }, []);
+  }
+
   try {
     const tasks = await TaskModel.find(
-      {},
-      { __v: 0, createdAt: 0, updatedAt: 0 }
-    ).populate("members", "_id nome matricula");
+      { _id: { $in: ids } },
+      { __v: 0 }
+    ).populate("members", "_id name registration");
     return res.status(200).json(tasks);
   } catch (error) {
     return res.status(500).json(error.errors);
