@@ -7,7 +7,7 @@ async function attachCurrentUser(req, res, next) {
     const user = await UserModel.findById(userData._id, { passwordHash: 0 });
 
     if (!user) {
-      return res.status(400).json({ msg: "Usuário não encontrado" });
+      return res.status(400).json({ msg: "User not found!" });
     }
 
     req.currentUser = user;
