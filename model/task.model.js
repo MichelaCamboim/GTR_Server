@@ -74,18 +74,17 @@ const taskSchema = new Schema(
     members: [{ type: Schema.Types.ObjectId, ref: "User" }],
     activities: [
       {
-        date: { type: Date, default: Date.now },
-        hours: { type: Number, default: 0 },
-        progress: { type: Number, default: 0 },
+        type: Schema.Types.ObjectId,
+        ref: "Activity",
       },
     ],
+    closed: Date,
     tags: [String],
     annex: [String],
   },
   {
     timestamps: {
       createdAt: true,
-      // updatedAt: true,
     },
     toJSON: {
       getters: true,
