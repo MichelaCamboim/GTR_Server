@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import TaskModel from "../model/task.model.js";
 import UserModel from "../model/user.model.js";
 import isAdmin from "../middleware/isAdmin.js";
+import isAuth from "../middleware/isAuth.js";
+import attachCurrentUser from "../middleware/attachCurrentUser.js";
 
 const taskRoute = express.Router();
 
@@ -52,23 +54,23 @@ taskRoute.get("/all", isAuth, attachCurrentUser, async (_, res) => {
   }
 
   try {
-    const tasks = await TaskModel.find(
-      { _id: { $in: ids } },
-      { __v: 0 }
-    ).populate("members", "_id name registration");
+    const tasks = await TaskModel.find({ _id: { $in: ids } }, { __v: 0 })
+      .populate("members", "_id name registration")
+      .populate("author", "_id name registration")
+      .populate("activities");
     return res.status(200).json(tasks);
   } catch (error) {
     return res.status(500).json(error.errors);
   }
 });
 
-taskRoute.get("/:taskId", async (req, res) => {
+taskRoute.get("/:taskId", isAuth, async (req, res) => {
   try {
     const { taskId } = req.params;
-    const task = await TaskModel.findById(taskId).populate(
-      "membros",
-      "_id nome matricula"
-    );
+    const task = await TaskModel.findById(taskId)
+      .populate("members", "_id name registration")
+      .populate("author", "_id name registration")
+      .populate("activities");
     if (!task) return res.status(400).json({ msg: "Usuário não encontrado!" });
 
     return res.status(200).json(task);
@@ -77,37 +79,43 @@ taskRoute.get("/:taskId", async (req, res) => {
   }
 });
 
-taskRoute.put("/:taskId", async (req, res) => {
-  const { taskId } = req.params;
+taskRoute.put(
+  "/:taskId",
+  isAuth,
+  attachCurrentUser,
+  isSupervisor,
+  async (req, res) => {
+    const { taskId } = req.params;
 
-  try {
-    const task = await TaskModel.findByIdAndUpdate(taskId, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!task) throw new Error("Tarefa não encontrada");
+    try {
+      const task = await TaskModel.findByIdAndUpdate(taskId, req.body, {
+        new: true,
+        runValidators: true,
+      });
+      if (!task) throw new Error("Tarefa não encontrada");
 
-    // adiciona a task aos usuários atribuídos, caso ainda não conste nas tasks
-    await UserModel.updateMany(
-      {
-        _id: { $in: task.membros },
-      },
-      { $addToSet: { tasks: taskId } },
-      { runValidators: true }
-    );
-    // remove a task dos usuários que não atribuídos à ela
-    await UserModel.updateMany(
-      { _id: { $nin: task.membros }, tasks: taskId },
-      {
-        $pull: { tasks: taskId },
-      }
-    );
-    return res.status(200).json(task);
-  } catch (error) {
-    console.log(error);
-    res.status(400).json("message" in error ? { msg: error.message } : error);
+      // adiciona a task aos usuários atribuídos, caso ainda não conste nas tasks
+      await UserModel.updateMany(
+        {
+          _id: { $in: task.membros },
+        },
+        { $addToSet: { tasks: taskId } },
+        { runValidators: true }
+      );
+      // remove a task dos usuários que não atribuídos à ela
+      await UserModel.updateMany(
+        { _id: { $nin: task.membros }, tasks: taskId },
+        {
+          $pull: { tasks: taskId },
+        }
+      );
+      return res.status(200).json(task);
+    } catch (error) {
+      console.log(error);
+      res.status(400).json("message" in error ? { msg: error.message } : error);
+    }
   }
-});
+);
 
 taskRoute.delete("/:taskId", async (req, res) => {
   try {
