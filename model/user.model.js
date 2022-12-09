@@ -2,21 +2,21 @@ import { Schema, model } from "mongoose";
 
 const userSchema = new Schema(
   {
-    matricula: {
+    registration: {
       type: Number,
       unique: true,
     },
-    nome: {
+    name: {
       type: String,
       required: true,
       trim: true,
     },
-    admissao: {
+    admission: {
       type: Date,
       match:
         /(?:(?:31(\/|-|\.)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-|\.)(?:0?[13-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-|\.)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})/,
     },
-    foto: {
+    photo: {
       type: String,
       default:
         "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
@@ -28,38 +28,34 @@ const userSchema = new Schema(
       trim: true,
       match: /[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+/gm,
     },
-    telefone: {
+    phone: {
       type: Number,
       match: /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
     },
-    fusoHorario: { type: Number },
-    jornada: { type: Number },
+    timezone: { type: Number },
+    workHours: { type: Number },
     codUser: { type: Number },
-    departamento: {
+    departament: {
       type: String,
       trim: true,
     },
-    cargo: {
+    jobPosition: {
       type: String,
       trim: true,
     },
     status: {
       type: String,
-      enum: ["Ativo", "Férias", "Licença"],
-      default: "Ativo",
+      enum: ["Active", "Vacation", "Inactive"],
+      default: "Active",
     },
-    inativo: {
-      type: Boolean,
-      default: false,
-    },
-    acesso: {
+    role: {
       type: String,
-      enum: ["ADMIN", "USER"],
-      default: "USER",
+      enum: ["admin", "user", "supervisor"],
+      default: "user",
     },
     passwordHash: { type: String, required: true },
-    habilidades: [{ type: String }],
-    avaliacao: [{ type: Schema.Types.ObjectId, ref: "Avaliacao" }],
+    skills: [{ type: String }],
+    report: [{ type: Schema.Types.ObjectId, ref: "Report" }],
     tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
   },
   {

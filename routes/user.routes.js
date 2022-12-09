@@ -4,14 +4,18 @@ import generateToken from "../config/jwt.config.js";
 
 import UserModel from "../model/user.model.js";
 import TaskModel from "../model/task.model.js";
-import AvaliacaoModel from "../model/avaliacao.model.js";
+import ReportModel from "../model/report.model.js";
+
+import isAuth from "../middleware/isAuth.js";
+import attachCurrentUser from "../middleware/attachCurrentUser.js";
+import isAdmin from "../middleware/isAdmin.js";
 
 const userRoute = express.Router();
 
 const saltRounds = 10;
 
 //---------------------------------------//
-// ROTA SIGN-UP
+// ROUTE SIGN-UP
 //---------------------------------------//
 
 userRoute.post("/sign-up", async (req, res) => {
@@ -26,7 +30,7 @@ userRoute.post("/sign-up", async (req, res) => {
     ) {
       return res
         .status(400)
-        .json({ msg: "Senha não tem requisitos mínimos de segurança" });
+        .json({ msg: "Password does not meet security policy requirements" });
     }
 
     const salt = await bcrypt.genSalt(saltRounds); // 10
@@ -56,7 +60,7 @@ userRoute.post("/login", async (req, res) => {
 
     const user = await UserModel.findOne({ email: email });
     if (!user) {
-      return res.status(400).json({ msg: "Usuário não cadastrado" });
+      return res.status(400).json({ msg: "Unregistered user" });
     }
 
     if (await bcrypt.compare(password, user.passwordHash)) {
@@ -69,7 +73,7 @@ userRoute.post("/login", async (req, res) => {
       });
     } else {
       //as senhas são diferentes!!
-      return res.status(401).json({ msg: "Email ou Senha inválido" });
+      return res.status(401).json({ msg: "Invalid email or password" });
     }
   } catch (error) {
     console.log(error);
@@ -113,9 +117,7 @@ userRoute.post("/create", async (req, res) => {
 
 userRoute.get("/all", async (req, res) => {
   try {
-    const users = await UserModel.find({})
-      .populate("tasks")
-      .populate("avaliacao");
+    const users = await UserModel.find({}).populate("tasks").populate("report");
 
     return res.status(200).json(users);
   } catch (error) {
@@ -133,10 +135,10 @@ userRoute.get("/oneUser/:userId", async (req, res) => {
 
     const user = await UserModel.findById(userId)
       .populate("tasks")
-      .populate("avaliacao");
+      .populate("report");
 
     if (!user) {
-      return res.status(400).json({ msg: " Usuário não encontrado!" });
+      return res.status(400).json({ msg: " User not found!" });
     }
 
     return res.status(200).json(user);
@@ -175,15 +177,14 @@ userRoute.delete("/delete/:userId", async (req, res) => {
     const deletedUser = await UserModel.findByIdAndDelete(userId);
 
     if (!deletedUser) {
-      return res.status(400).json({ msg: "Usuário não encontrado!" });
+      return res.status(400).json({ msg: "User not found!" });
     }
 
     const users = await UserModel.find();
     console.log(deletedUser);
 
-    //deletar TODAS as tarefas e avaliações que são do usuário
     await TaskModel.deleteMany({ user: userId });
-    await AvaliacaoModel.deleteMany({ user: userId });
+    await ReportModel.deleteMany({ user: userId });
 
     return res.status(200).json(users);
   } catch (error) {
