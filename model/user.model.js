@@ -5,6 +5,7 @@ const userSchema = new Schema(
     registration: {
       type: Number,
       unique: true,
+      required: true,
     },
     name: {
       type: String,
@@ -48,10 +49,22 @@ const userSchema = new Schema(
       enum: ["Active", "Vacation", "Inactive"],
       default: "Active",
     },
+    inactive: {
+      type: Boolean,
+      default: false,
+    },
     role: {
       type: String,
-      enum: ["admin", "user", "supervisor"],
+      enum: ["admin", "user", "supervisor", "director"],
       default: "user",
+    },
+    supervisor: {
+      type: Boolean,
+      default: false,
+    },
+    director: {
+      type: Boolean,
+      default: false,
     },
     passwordHash: { type: String, required: true },
     skills: [{ type: String }],
