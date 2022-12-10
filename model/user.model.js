@@ -66,6 +66,8 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    manager: [{ type: String }],
+    team: [{ type: String }],
     passwordHash: { type: String, required: true },
     skills: [{ type: String }],
     report: [{ type: Schema.Types.ObjectId, ref: "Report" }],

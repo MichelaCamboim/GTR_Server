@@ -141,10 +141,10 @@ userRoute.delete(
   }
 );
 
-//---------------------------------------//
-//---------------------------------------//
+//--------------------------------------------//
+//--------------------------------------------//
 // ROUTES AUTHORIZED DIRECTOR AND SUPERVISOR
-//---------------------------------------//
+//--------------------------------------------//
 
 //---------------------------------------//
 // GET ALL USERS
@@ -170,6 +170,26 @@ userRoute.get(
   }
 );
 
+//---------------------------------------//
+// GET ONE USER
+//---------------------------------------//
+
+userRoute.get("/one-user", isAuth, attachCurrentUser, async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.currentUser._id)
+      .populate("tasks")
+      .populate("report");
+
+    if (!user) {
+      return res.status(400).json({ msg: "User not found!" });
+    }
+
+    return res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
 //---------------------------------------//
 // EDIT USER
 //---------------------------------------//
