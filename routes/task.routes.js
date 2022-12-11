@@ -1,9 +1,10 @@
 import express from "express";
-import mongoose from "mongoose";
+// import transporter from "../config/mail.config.js";
 import TaskModel from "../model/task.model.js";
 import UserModel from "../model/user.model.js";
 import isAuth from "../middleware/isAuth.js";
 import attachCurrentUser from "../middleware/attachCurrentUser.js";
+import Mongoose from "mongoose";
 
 const taskRoute = express.Router();
 
@@ -25,25 +26,28 @@ taskRoute.post("/new", isAuth, attachCurrentUser, async (req, res) => {
       return res.status(500).json({ message: error.errors });
     }
 
-    /* 
-      // ENVIA E-MAIL PARA TODOS QUE RECEBERAM UMA NOVA TAREFA
-        if (task.members.length) {
-        let users = await UserModel.find({_id: {$in: task.members}}, {email: 1});
-        let emails = users.map(user => user.email);
-        const mailOptions = {
-          from: process.env.EMAIL, //nosso email
-          to: emails.join(', '), // emails dos usuários
-          subject: "[GTR] New Task",
-          html: `
+    // ENVIA E-MAIL PARA TODOS QUE RECEBERAM UMA NOVA TAREFA
+    if (task.members.length) {
+      let users = await UserModel.find(
+        { _id: { $in: task.members } },
+        { email: 1 }
+      );
+      let emails = users.map((user) => user.email);
+      const mailOptions = {
+        from: process.env.EMAIL, //nosso email
+        to: emails.join(", "), // emails dos usuários
+        subject: "[GTR] New Task",
+        html: `
             <div>
               <h1>${task.name} was assigned to you</h1>
               <p>${task.description}</p>
               <p>${task.deadline}</p>
             </div>
           `,
-        };
-        await transporter.sendMail(mailOptions);
-      }*/
+      };
+      console.log(mailOptions);
+      // await transporter.sendMail(mailOptions);
+    }
 
     return res.status(201).json({ msg: "Task successfuly created." });
   } catch (error) {
@@ -56,14 +60,11 @@ taskRoute.get("/all", isAuth, attachCurrentUser, async (_, res) => {
   let ids;
 
   if (req.user.role === "user") {
-    // get user tasks ids
-    ids = req.user.role;
+    ids = req.user.role; // get user tasks ids
   } else {
-    // get supervisor's subordinates tasks ids
-    let users = req.user.subordinates;
+    let users = req.user.team; // get team's tasks ids
 
-    if (!users)
-      return res.status(400).json({ msg: "User doesn't have subordinates" });
+    if (!users) return res.status(400).json({ msg: "User doesn't have team" });
 
     let tasks = await UserModel.find({ _id: { $in: users } }, { tasks: 1 });
     ids = tasks.reduce((acc, { tasks }) => {
@@ -103,7 +104,7 @@ taskRoute.put("/:taskId", isAuth, attachCurrentUser, async (req, res) => {
   let updateObj = req.body;
 
   if (req.currentUser.role === "user") {
-    // user allowed updates
+    // user's allowed updates
     updateObj = {};
     let keys = ["status", "annex"];
     for (let key of keys) {
@@ -117,23 +118,32 @@ taskRoute.put("/:taskId", isAuth, attachCurrentUser, async (req, res) => {
     if (!task) throw new Error("Task not found!");
 
     if ("members" in updateObj) {
-      let removedMembers = task.members.filter(
-        (member) => !updateObj.includes(member)
-      );
-      if (removedMembers.length)
+      // updateObj.members = updateObj.members.map(
+      //   (member) => new Mongoose.Types.ObjectId(member)
+      // );
+
+      function diff(array1, array2) {
+        return array1.filter((item1) => array2.indexOf(item1) === -1);
+      }
+
+      let OgAsString = task.members.map((member) => member.toString());
+
+      let removedMembers = diff(OgAsString, updateObj.members);
+      let insertedMembers = diff(updateObj.members, OgAsString);
+
+      if (removedMembers.length) {
         await UserModel.updateMany(
           { _id: { $in: removedMembers } },
           {
             $pull: { tasks: taskId },
           }
         );
+      }
 
-      let insertedMembers = updateObj.members.filter(
-        (member) => !task.members.includes(member)
-      );
+      console.log(insertedMembers);
       if (insertedMembers.length) {
         let emails = [];
-        insertedMembers.forEach(async (memberId) => {
+        for (let memberId of insertedMembers) {
           let user = await UserModel.findByIdAndUpdate(
             memberId,
             {
@@ -146,26 +156,28 @@ taskRoute.put("/:taskId", isAuth, attachCurrentUser, async (req, res) => {
             }
           );
           emails.push(user.email);
-        });
+        }
 
-        /* const mailOptions = {
-            from: process.env.EMAIL,
-            to: emails.join(', '),
-            subject: "[GTR] New Task",
-            html: `
+        const mailOptions = {
+          from: process.env.EMAIL,
+          to: emails.join(", "),
+          subject: "[GTR] New Task",
+          html: `
               <div>
                 <h1>${task.name} was assigned to you</h1>
                 <p>${task.description}</p>
                 <p>${task.deadline}</p>
               </div>
             `,
-          };
-          await transporter.sendMail(mailOptions); */
+        };
+        console.log(mailOptions);
+
+        // await transporter.sendMail(mailOptions);
       }
     }
 
     for (let key in updateObj) {
-      task[key] = updateObj;
+      task[key] = updateObj[key];
     }
     await task.save();
 
@@ -183,8 +195,8 @@ taskRoute.delete("/:taskId", isAuth, attachCurrentUser, async (req, res) => {
   try {
     const { taskId } = req.params;
     const task = await TaskModel.findByIdAndDelete(taskId);
-    if (!task) return res.status(400).json({ msg: "Task not found!" });
 
+    if (!task) return res.status(400).json({ msg: "Task not found!" });
     await TaskModel.updateMany({ task: taskId }, { $pull: { tasks: taskId } });
 
     return res.status(200).json({ msg: "Task successfully deleted!" });
