@@ -15,14 +15,6 @@ const taskSchema = new Schema(
       trim: true,
       minLength: 3,
     },
-    status: {
-      type: String,
-      required: true,
-      trim: true,
-      lowercase: true,
-      enum: ["started", "rejected", "active", "pending", "done", "archive"],
-      default: "started",
-    },
     author: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -30,6 +22,13 @@ const taskSchema = new Schema(
     },
 
     // optional
+    status: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      enum: ["started", "rejected", "active", "pending", "done", "archive"],
+      default: "started",
+    },
     priority: {
       type: String,
       trim: true,
