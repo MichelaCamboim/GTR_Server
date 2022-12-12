@@ -15,39 +15,35 @@ taskRoute.post("/new", isAuth, attachCurrentUser, async (req, res) => {
       author: req.currentUser._id,
     });
 
-    try {
-      await UserModel.updateMany(
-        { _id: { $in: task.members } },
-        { $push: { tasks: task._id } },
-        { runValidators: true }
-      );
-    } catch (error) {
-      console.log("failed to push the task to users tasks");
-      return res.status(500).json({ message: error.errors });
+    let users = await UserModel.find({ _id: task.members }, { email: 1 });
+    let emails = [];
+
+    for (let user of users) {
+      user.push(task._id);
+      try {
+        await user.save();
+        emails.push(user.email);
+      } catch (e) {
+        return res
+          .status(500)
+          .json({ msg: "error at adding task to all users", log: e.error });
+      }
     }
 
-    // ENVIA E-MAIL PARA TODOS QUE RECEBERAM UMA NOVA TAREFA
-    if (task.members.length) {
-      let users = await UserModel.find(
-        { _id: { $in: task.members } },
-        { email: 1 }
-      );
-      let emails = users.map((user) => user.email);
-      const mailOptions = {
-        from: process.env.EMAIL, //nosso email
-        to: emails.join(", "), // emails dos usuários
-        subject: "[GTR] New Task",
-        html: `
-            <div>
-              <h1>${task.name} was assigned to you</h1>
-              <p>${task.description}</p>
-              <p>${task.deadline}</p>
-            </div>
-          `,
-      };
-      console.log(mailOptions);
-      // await transporter.sendMail(mailOptions);
-    }
+    const mailOptions = {
+      from: process.env.EMAIL, //nosso email
+      to: emails.join(", "), // emails dos usuários
+      subject: "[GTR] New Task",
+      html: `
+          <div>
+            <h1>${task.name} was assigned to you</h1>
+            <p>${task.description}</p>
+            <p>${task.deadline}</p>
+          </div>
+        `,
+    };
+    console.log("deactivated! [sending e-mail]", mailOptions);
+    // await transporter.sendMail(mailOptions);
 
     return res.status(201).json({ msg: "Task successfuly created." });
   } catch (error) {
@@ -64,7 +60,8 @@ taskRoute.get("/all", isAuth, attachCurrentUser, async (_, res) => {
   } else {
     let users = req.user.team; // get team's tasks ids
 
-    if (!users) return res.status(400).json({ msg: "User doesn't have team" });
+    if (!users)
+      return res.status(200).json({ msg: `${req.user.role}'s team is empty.` });
 
     let tasks = await UserModel.find({ _id: { $in: users } }, { tasks: 1 });
     ids = tasks.reduce((acc, { tasks }) => {
@@ -74,7 +71,7 @@ taskRoute.get("/all", isAuth, attachCurrentUser, async (_, res) => {
   }
 
   try {
-    const tasks = await TaskModel.find({ _id: { $in: ids } }, { __v: 0 })
+    const tasks = await TaskModel.find({ _id: ids }, { __v: 0 })
       .populate("members", "_id name registration")
       .populate("author", "_id name registration")
       .populate("activities");
@@ -104,8 +101,8 @@ taskRoute.put("/:taskId", isAuth, attachCurrentUser, async (req, res) => {
   let updateObj = req.body;
 
   if (req.currentUser.role === "user") {
-    // user's allowed updates
     updateObj = {};
+    // user's allowed updates
     let keys = ["status", "annex"];
     for (let key of keys) {
       if (key in req.body) updateObj[key] = req.body[key];
@@ -114,14 +111,9 @@ taskRoute.put("/:taskId", isAuth, attachCurrentUser, async (req, res) => {
 
   try {
     const task = await TaskModel.findById(taskId);
-
     if (!task) throw new Error("Task not found!");
 
     if ("members" in updateObj) {
-      // updateObj.members = updateObj.members.map(
-      //   (member) => new Mongoose.Types.ObjectId(member)
-      // );
-
       function diff(array1, array2) {
         return array1.filter((item1) => array2.indexOf(item1) === -1);
       }
@@ -140,7 +132,6 @@ taskRoute.put("/:taskId", isAuth, attachCurrentUser, async (req, res) => {
         );
       }
 
-      console.log(insertedMembers);
       if (insertedMembers.length) {
         let emails = [];
         for (let memberId of insertedMembers) {
@@ -170,10 +161,15 @@ taskRoute.put("/:taskId", isAuth, attachCurrentUser, async (req, res) => {
               </div>
             `,
         };
-        console.log(mailOptions);
-
+        console.log("deactivated! [sending e-mail]", mailOptions);
         // await transporter.sendMail(mailOptions);
       }
+    }
+
+    if ("annex" in updateObj) {
+      console.log(
+        "not implemented! should save the file in cloudnary and store the url"
+      );
     }
 
     for (let key in updateObj) {

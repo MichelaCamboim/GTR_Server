@@ -3,11 +3,10 @@ import { Schema, model } from "mongoose";
 const taskSchema = new Schema(
   {
     // required
-    name: {
-      type: String,
+    author: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: true,
-      trim: true,
-      minLength: 3,
     },
     description: {
       type: String,
@@ -15,38 +14,14 @@ const taskSchema = new Schema(
       trim: true,
       minLength: 3,
     },
-    author: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
+    name: {
+      type: String,
       required: true,
+      trim: true,
+      minLength: 3,
     },
 
     // optional
-    status: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      enum: ["started", "rejected", "active", "pending", "done", "archive"],
-      default: "started",
-    },
-    priority: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      enum: ["high", "regular", "low"],
-      default: "regular",
-    },
-    estimated: {
-      type: String,
-      trim: true,
-      validate: {
-        validator: (v) => {
-          return /^(?:(?:[0-1][0-9])|(?:2[0-3])):(?:[0-5][0-9])$/.test(v);
-        },
-        message:
-          "Estimated time should be in HH:MM format. Informed string is invalid: {VALUE}",
-      },
-    },
     deadline: {
       type: Date,
       trim: true,
@@ -68,18 +43,44 @@ const taskSchema = new Schema(
         },
       },
     },
+    estimated: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: (v) => {
+          return /^(?:(?:[0-1][0-9])|(?:2[0-3])):(?:[0-5][0-9])$/.test(v);
+        },
+        message:
+          "Estimated time should be in HH:MM format. Informed string is invalid: {VALUE}",
+      },
+    },
+    priority: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      enum: ["high", "regular", "low"],
+      default: "regular",
+    },
+    status: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      enum: ["started", "rejected", "active", "pending", "done", "archive"],
+      default: "started",
+    },
 
     // not strictly required at creation
-    members: [{ type: Schema.Types.ObjectId, ref: "User" }],
+
     activities: [
       {
         type: Schema.Types.ObjectId,
         ref: "Activity",
       },
     ],
-    closed: Date,
-    tags: [String],
     annex: [String],
+    closed: Date,
+    members: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    tags: [String],
   },
   {
     timestamps: {
