@@ -15,7 +15,7 @@ import uploadRoute from "./routes/uploadFile.routes.js";
 
 dotenv.config();
 const app = express();
-app.use(cors());
+app.use(cors({origin: process.env.REACT_APP}));
 app.use(express.json());
 connect();
 
