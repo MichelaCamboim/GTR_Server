@@ -1,8 +1,8 @@
 import { Schema, model } from "mongoose";
-import isURL from "validator/es/lib/isURL";
-import isEmail from "validator/es/lib/isEmail";
-import normalizeEmail from "validator/es/lib/normalizeEmail";
-import isMobilePhone from "validator/es/lib/isMobilePhone";
+import isURL from "validator/es/lib/isURL.js";
+import isEmail from "validator/es/lib/isEmail.js";
+import normalizeEmail from "validator/es/lib/normalizeEmail.js";
+import isMobilePhone from "validator/es/lib/isMobilePhone.js";
 
 const userSchema = new Schema(
   {
