@@ -5,14 +5,12 @@ const userSchema = new Schema(
     registration: {
       type: Number,
       unique: true,
-      required: true,
     },
     name: {
       type: String,
-      required: true,
       trim: true,
     },
-    passwordHash: { type: String },
+    passwordHash: { type: String, required: true },
     admission: {
       type: Date,
       match:
@@ -55,8 +53,8 @@ const userSchema = new Schema(
       enum: ["admin", "user", "supervisor", "director"],
       default: "user",
     },
-    manager: [{type: String}],
-    team: [{type: String}],
+    manager: [{ type: String }],
+    team: [{ type: String }],
     report: [{ type: Schema.Types.ObjectId, ref: "Report" }],
     tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
     chat: [{ type: Schema.Types.ObjectId, ref: "Chatbot" }],

@@ -14,6 +14,58 @@ import isSuperv from "../middleware/isSuperv.js";
 const userRoute = express.Router();
 
 //------------------------------------------------------//
+// SIGN-UP PAGE
+//-----------------------------------------------------//
+
+userRoute.post("/sign-up", async (req, res) => {
+  try {
+    const { password, email } = req.body;
+
+    if (
+      !password ||
+      !password.match(
+        /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[$*&@#!])[0-9a-zA-Z$*&@#!]{8,}$/
+      )
+    ) {
+      return res.status(400).json({
+        msg: "Password does not meet minimum security requirements. Password length: minimum eight characters. Numeric characters: minimum of two numbers. Special Characters: minimum of one special character. Capital letters: minimum of one capital letter. Lowercase: minimum of one lowercase letter. Please type again.",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(saltRounds);
+
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = await UserModel.create({
+      ...req.body,
+      passwordHash: hashedPassword,
+    });
+
+    delete newUser._doc.passwordHash;
+
+    /* //configuro o corpo do email
+    const mailOptions = {
+      from: "turma92wd@hotmail.com", //nosso email
+      to: email, //o email do usuário
+      subject: "Ativação de Conta",
+      html: `
+        <h1>Bem vindo ao nosso site.</h1>
+        <p>Por favor, confirme seu email clicando no link abaixo.</p>
+        <a href=http://localhost:8080/user/activate-account/${newUser._id}>ATIVE SUA CONTA</a>
+      `,
+    };
+ */
+    //envio do email
+    //await transporter.sendMail(mailOptions);
+
+    return res.status(201).json(newUser);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+//------------------------------------------------------//
 // LOGIN PAGE : ONLY REGISTERED USERS ARE AUTHORIZED
 //-----------------------------------------------------//
 
