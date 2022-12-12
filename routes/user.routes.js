@@ -1,6 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import generateToken from "../config/jwt.config.js";
+import nodemailer from "../config/mail.config.js";
 
 import UserModel from "../model/user.model.js";
 import TaskModel from "../model/task.model.js";
@@ -42,19 +43,19 @@ userRoute.post("/sign-up", async (req, res) => {
     });
 
     delete newUser._doc.passwordHash;
-
-    /* //configuro o corpo do email
+/* 
     const mailOptions = {
-      from: "turma92wd@hotmail.com", //nosso email
-      to: email, //o email do usuário
-      subject: "Ativação de Conta",
+      from: process.env.EMAIL,
+      to: email // emails dos usuários
+      subject: "[GTR] Ativação de Conta",
       html: `
-        <h1>Bem vindo ao nosso site.</h1>
-        <p>Por favor, confirme seu email clicando no link abaixo.</p>
-        <a href=http://localhost:8080/user/activate-account/${newUser._id}>ATIVE SUA CONTA</a>
-      `,
-    };
- */
+          <div>
+            <h1>${newUser.name} bem vindo ao nosso site. </h1>
+            <p>Por favor, confirme seu email clicando no link abaixo.</p>
+            <a href=http://localhost:8080/user/activate-account/${newUser._id}>ATIVE SUA CONTA</a>
+              </div>
+        `,
+    }; */
     //envio do email
     //await transporter.sendMail(mailOptions);
 
