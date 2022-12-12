@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+/* import { Schema, model } from "mongoose";
 import cod from "../chatConfig/cod.js";
 
 const chatbotSchema = new Schema(
@@ -23,3 +23,4 @@ const chatbotSchema = new Schema(
 const chatbotModel = model("Chatbot", chatbotSchema);
 
 export default chatbotModel;
+ */

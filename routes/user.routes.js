@@ -43,21 +43,20 @@ userRoute.post("/sign-up", async (req, res) => {
     });
 
     delete newUser._doc.passwordHash;
-/* 
+
     const mailOptions = {
       from: process.env.EMAIL,
-      to: email // emails dos usuários
+      to: email,
       subject: "[GTR] Ativação de Conta",
       html: `
           <div>
-            <h1>${newUser.name} bem vindo ao nosso site. </h1>
-            <p>Por favor, confirme seu email clicando no link abaixo.</p>
-            <a href=http://localhost:8080/user/activate-account/${newUser._id}>ATIVE SUA CONTA</a>
+            <h1>${newUser.name} Welcome to our website. </h1>
+            <p>Please, confirm your email by clicking on the link below</p>
+            <a href=${process.env.SERVER_URL}/user/activate-account/${newUser._id}>ATIVE SUA CONTA</a>
               </div>
         `,
-    }; */
-    //envio do email
-    //await transporter.sendMail(mailOptions);
+    };
+    await transporter.sendMail(mailOptions);
 
     return res.status(201).json(newUser);
   } catch (error) {
@@ -67,7 +66,30 @@ userRoute.post("/sign-up", async (req, res) => {
 });
 
 //------------------------------------------------------//
-// LOGIN PAGE : ONLY REGISTERED USERS ARE AUTHORIZED
+// ACTIVATE ACCOUNT
+//-----------------------------------------------------//
+
+userRoute.get("/activate-account/:idUser", async (req, res) => {
+  try {
+    const { idUser } = req.params;
+
+    const user = await UserModel.findByIdAndUpdate(idUser, {
+      confirmEmail: true,
+    });
+
+    console.log(user);
+
+    return res.send(
+      `Your account has been successfully activated, ${user.name}`
+    );
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+//------------------------------------------------------//
+// LOGIN PAGE : ONLY REGISTERED AND CONFIRMED USERS ARE ALLOWED
 //-----------------------------------------------------//
 
 userRoute.post("/login", async (req, res) => {

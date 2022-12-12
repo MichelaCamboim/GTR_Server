@@ -1,4 +1,4 @@
-import express from "express";
+/* import express from "express";
 import chatbotModel from "../model/chatbot.model.js";
 
 const chatbotRoute = express.Router();
@@ -95,3 +95,4 @@ chatbotRoute.delete("/delete/:chatId", async (req, res) => {
 });
 
 export default chatbotRoute;
+ */

@@ -1,8 +1,4 @@
 import { Schema, model } from "mongoose";
-/* import isURL from "validator/es/lib/isURL.js";
-import isEmail from "validator/es/lib/isEmail.js";
-import normalizeEmail from "validator/es/lib/normalizeEmail.js";
-import isMobilePhone from "validator/es/lib/isMobilePhone.js"; */
 import validator from "validator";
 
 const userSchema = new Schema(
@@ -41,6 +37,7 @@ const userSchema = new Schema(
         message: "Informed e-mail is invalid.",
       },
     },
+    confirmEmail: { type: Boolean, default: false },
     phone: {
       type: String,
       trim: true,

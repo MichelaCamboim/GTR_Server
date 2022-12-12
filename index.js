@@ -8,14 +8,14 @@ import taskRoute from "./routes/task.routes.js";
 import mytasksRoute from "./routes/mytasks.routes.js";
 
 import reportRoute from "./routes/report.routes.js";
-import chatbotRoute from "./routes/chatbot.routes.js";
+//import chatbotRoute from "./routes/chatbot.routes.js";
 
 import logRoute from "./routes/log.routes.js";
 import uploadRoute from "./routes/uploadFile.routes.js";
 
 dotenv.config();
 const app = express();
-app.use(cors({origin: process.env.REACT_APP}));
+app.use(cors({ origin: process.env.REACT_APP }));
 app.use(express.json());
 connect();
 
@@ -23,7 +23,7 @@ app.use("/user", userRoute);
 app.use("/task", taskRoute);
 app.use("/mytasks", mytasksRoute);
 app.use("/report", reportRoute);
-app.use("/chatbot", chatbotRoute);
+//app.use("/chatbot", chatbotRoute);
 
 app.use("/log", logRoute);
 app.use("/fileUpload", uploadRoute);
