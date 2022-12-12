@@ -1,41 +1,72 @@
 import { Schema, model } from "mongoose";
+import isURL from "validator/es/lib/isURL";
+import isEmail from "validator/es/lib/isEmail";
+import normalizeEmail from "validator/es/lib/normalizeEmail";
+import isMobilePhone from "validator/es/lib/isMobilePhone";
 
 const userSchema = new Schema(
   {
-    registration: {
-      type: Number,
+    // required
+    email: {
+      type: String,
       unique: true,
       required: true,
+      trim: true,
+      set: normalizeEmail,
+      validate: {
+        validator: (v) => isEmail(v, { domain_specific_validation: true }),
+        message: "Informed e-mail is invalid.",
+      },
     },
     name: {
       type: String,
       required: true,
       trim: true,
     },
-    admission: {
-      type: Date,
-      match:
-        /(?:(?:31(\/|-|\.)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-|\.)(?:0?[13-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-|\.)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})/,
+    passwordHash: { type: String, required: true },
+    registration: {
+      type: Number,
+      unique: true,
+      required: true,
+    },
+
+    // optional -> default
+    director: {
+      type: Boolean,
+      default: false,
+    },
+    inactive: {
+      type: Boolean,
+      default: false,
     },
     photo: {
       type: String,
+      trim: true,
       default:
         "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
+      validate: {
+        validator: isURL,
+        message: "Photo's url is invalid.",
+      },
     },
-    email: {
+    role: {
       type: String,
-      unique: true,
-      required: true,
-      trim: true,
-      match: /[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+/gm,
+      enum: ["admin", "user", "supervisor", "director"],
+      default: "user",
     },
-    phone: {
-      type: Number,
-      match: /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
+    status: {
+      type: String,
+      enum: ["Active", "Vacation", "Inactive"],
+      default: "Active",
     },
-    timezone: { type: Number },
-    workHours: { type: Number },
-    codUser: { type: Number },
+    supervisor: {
+      type: Boolean,
+      default: false,
+    },
+
+    // not strictly required at creation
+    admission: Date,
+    codUser: Number,
     departament: {
       type: String,
       trim: true,
@@ -44,34 +75,24 @@ const userSchema = new Schema(
       type: String,
       trim: true,
     },
-    status: {
+    manager: [String],
+    phone: {
       type: String,
-      enum: ["Active", "Vacation", "Inactive"],
-      default: "Active",
+      trim: true,
+      validate: {
+        // celular ou telefone fixo
+        validator: (v) =>
+          isMobilePhone(v, "pt-BR") ||
+          v.test(/^(?:(?:\(\d{2}\)|\d{2})[\.\s-]*)?[2-5]\d{3}[\.\s-]?\d{4}$/),
+        message: "Telephone number is invalid.",
+      },
     },
-    inactive: {
-      type: Boolean,
-      default: false,
-    },
-    role: {
-      type: String,
-      enum: ["admin", "user", "supervisor", "director"],
-      default: "user",
-    },
-    supervisor: {
-      type: Boolean,
-      default: false,
-    },
-    director: {
-      type: Boolean,
-      default: false,
-    },
-    manager: [{ type: String }],
-    team: [{ type: String }],
-    passwordHash: { type: String, required: true },
-    skills: [{ type: String }],
     report: [{ type: Schema.Types.ObjectId, ref: "Report" }],
+    skills: [String],
     tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+    team: [String],
+    timezone: Number,
+    workHours: Number,
   },
   {
     timestamps: true,
