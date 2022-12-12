@@ -17,7 +17,7 @@ reportRoute.post("/create/:userId", async (req, res) => {
       userId,
       {
         $push: {
-          avaliacao: newReport._id,
+          report: newReport._id,
         },
       },
       { new: true, runValidators: true }
@@ -50,13 +50,13 @@ reportRoute.get("/oneReport/:repId", async (req, res) => {
     const { repId } = req.params;
     console.log(repId);
 
-    const avaliacao = await ReportModel.findById(repId).populate("user");
+    const report = await ReportModel.findById(repId).populate("user");
 
-    if (!avaliacao) {
+    if (!report) {
       return res.status(400).json({ msg: "User not found!" });
     }
 
-    return res.status(200).json(avaliacao);
+    return res.status(200).json(report);
   } catch (error) {
     console.log(error);
     return res.status(500).json(error.errors);
@@ -70,13 +70,13 @@ reportRoute.put("/edit/:avalId", async (req, res) => {
     const { repId } = req.params;
     console.log(repId);
 
-    const updatedAval = await ReportModel.findByIdAndUpdate(
+    const updatedReport = await ReportModel.findByIdAndUpdate(
       { _id: repId },
       { ...req.body },
       { new: true, runValidators: true }
     );
 
-    return res.status(200).json(updatedAval);
+    return res.status(200).json(updatedReport);
   } catch (error) {
     console.log(error);
     return res.status(500).json(error.errors);

@@ -12,6 +12,7 @@ const userSchema = new Schema(
       required: true,
       trim: true,
     },
+    passwordHash: { type: String },
     admission: {
       type: Date,
       match:
@@ -35,8 +36,7 @@ const userSchema = new Schema(
     },
     timezone: { type: Number },
     workHours: { type: Number },
-    codUser: { type: Number },
-    departament: {
+    department: {
       type: String,
       trim: true,
     },
@@ -44,34 +44,22 @@ const userSchema = new Schema(
       type: String,
       trim: true,
     },
+    skills: [{ type: String }],
     status: {
       type: String,
       enum: ["Active", "Vacation", "Inactive"],
       default: "Active",
-    },
-    inactive: {
-      type: Boolean,
-      default: false,
     },
     role: {
       type: String,
       enum: ["admin", "user", "supervisor", "director"],
       default: "user",
     },
-    supervisor: {
-      type: Boolean,
-      default: false,
-    },
-    director: {
-      type: Boolean,
-      default: false,
-    },
-    manager: [{ type: String }],
-    team: [{ type: String }],
-    passwordHash: { type: String, required: true },
-    skills: [{ type: String }],
+    manager: [{type: String}],
+    team: [{type: String}],
     report: [{ type: Schema.Types.ObjectId, ref: "Report" }],
     tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+    chat: [{ type: Schema.Types.ObjectId, ref: "Chatbot" }],
   },
   {
     timestamps: true,
