@@ -12,7 +12,7 @@ import isDirector from "../middleware/isDirector.js";
 import isSuperv from "../middleware/isSuperv.js";
 
 const userRoute = express.Router();
-/*
+
 //------------------------------------------------------//
 // LOGIN PAGE : ONLY REGISTERED USERS ARE AUTHORIZED
 //-----------------------------------------------------//
@@ -230,7 +230,8 @@ userRoute.put("/edit", isAuth, attachCurrentUser, async (req, res) => {
     return res.status(500).json(error.errors);
   }
 });
-*/
+
+/*
 //CREATE USER
 
 userRoute.post("/create", async (req, res) => {
@@ -349,5 +350,5 @@ userRoute.delete("/delete/:userId", async (req, res) => {
     return res.status(500).json(error.errors);
   }
 });
-
+*/
 export default userRoute;
