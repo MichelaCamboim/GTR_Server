@@ -14,6 +14,58 @@ import isSuperv from "../middleware/isSuperv.js";
 const userRoute = express.Router();
 
 //------------------------------------------------------//
+// SIGN-UP PAGE
+//-----------------------------------------------------//
+
+userRoute.post("/sign-up", async (req, res) => {
+  try {
+    const { password, email } = req.body;
+
+    if (
+      !password ||
+      !password.match(
+        /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[$*&@#!])[0-9a-zA-Z$*&@#!]{8,}$/
+      )
+    ) {
+      return res.status(400).json({
+        msg: "Password does not meet minimum security requirements. Password length: minimum eight characters. Numeric characters: minimum of two numbers. Special Characters: minimum of one special character. Capital letters: minimum of one capital letter. Lowercase: minimum of one lowercase letter. Please type again.",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(saltRounds);
+
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = await UserModel.create({
+      ...req.body,
+      passwordHash: hashedPassword,
+    });
+
+    delete newUser._doc.passwordHash;
+
+    /* //configuro o corpo do email
+    const mailOptions = {
+      from: "turma92wd@hotmail.com", //nosso email
+      to: email, //o email do usuário
+      subject: "Ativação de Conta",
+      html: `
+        <h1>Bem vindo ao nosso site.</h1>
+        <p>Por favor, confirme seu email clicando no link abaixo.</p>
+        <a href=http://localhost:8080/user/activate-account/${newUser._id}>ATIVE SUA CONTA</a>
+      `,
+    };
+ */
+    //envio do email
+    //await transporter.sendMail(mailOptions);
+
+    return res.status(201).json(newUser);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+//------------------------------------------------------//
 // LOGIN PAGE : ONLY REGISTERED USERS ARE AUTHORIZED
 //-----------------------------------------------------//
 
@@ -60,6 +112,26 @@ userRoute.get("/profile", isAuth, attachCurrentUser, async (req, res) => {
     return res.status(500).json(error.errors);
   }
 });
+
+//---------------------------------------//
+// EDIT
+//---------------------------------------//
+
+userRoute.put("/edit", isAuth, attachCurrentUser, async (req, res) => {
+  try {
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      req.currentUser._id,
+      { ...req.body },
+      { new: true, runValidators: true }
+    );
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
 //---------------------------------------//
 //---------------------------------------//
 // ROUTES ONLY DIRECTOR AUTHORIZED
@@ -110,6 +182,31 @@ userRoute.post(
 );
 
 //---------------------------------------//
+// GET ALL
+//---------------------------------------//
+
+userRoute.get(
+  "/allDir",
+  isAuth,
+  attachCurrentUser,
+  isDirector,
+  async (req, res) => {
+    try {
+      const users = await UserModel.find().populate("tasks").populate("report");
+
+      if (!users) return res.status(400).json({ msg: "Users not found!" });
+
+      console.log(users);
+
+      return res.status(200).json(users);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json(error.errors);
+    }
+  }
+);
+
+//---------------------------------------//
 // DELETE USER
 //---------------------------------------//
 
@@ -123,15 +220,15 @@ userRoute.delete(
       const deletedUser = await UserModel.findByIdAndDelete(
         req.currentUser._id
       );
+      console.log(deletedUser);
 
       if (!deletedUser) {
         return res.status(400).json({ msg: "User not found!" });
       }
-      const users = await UserModel.find();
-      console.log(deletedUser);
 
-      await TaskModel.deleteMany({ author: req.currentUser._id });
+      await TaskModel.deleteMany({ members: req.currentUser._id });
       await ReportModel.deleteMany({ user: req.currentUser._id });
+      const users = await UserModel.find();
 
       return res.status(200).json(users);
     } catch (error) {
@@ -143,24 +240,21 @@ userRoute.delete(
 
 //--------------------------------------------//
 //--------------------------------------------//
-// ROUTES AUTHORIZED DIRECTOR AND SUPERVISOR
+// ROUTES ONLY SUPERVISOR AUTHORIZED
 //--------------------------------------------//
 
 //---------------------------------------//
-// GET ALL USERS
+// GET USER
 //---------------------------------------//
 
 userRoute.get(
-  "/all",
+  "/allSuperv",
   isAuth,
   attachCurrentUser,
-  isDirector,
   isSuperv,
   async (req, res) => {
     try {
-      const users = await UserModel.find({})
-        .populate("tasks")
-        .populate("report");
+      const users = await UserModel.find().populate("tasks").populate("report");
 
       return res.status(200).json(users);
     } catch (error) {
@@ -171,27 +265,7 @@ userRoute.get(
 );
 
 //---------------------------------------//
-// GET ONE USER
-//---------------------------------------//
-
-userRoute.get("/one-user", isAuth, attachCurrentUser, async (req, res) => {
-  try {
-    const user = await UserModel.findById(req.currentUser._id)
-      .populate("tasks")
-      .populate("report");
-
-    if (!user) {
-      return res.status(400).json({ msg: "User not found!" });
-    }
-
-    return res.status(200).json(user);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
-  }
-});
-//---------------------------------------//
-// EDIT USER
+// EDIT ROLE: USER, ALLOWED FOR SUPERV OR DIR
 //---------------------------------------//
 
 userRoute.put("/edit", isAuth, attachCurrentUser, async (req, res) => {
@@ -209,4 +283,124 @@ userRoute.put("/edit", isAuth, attachCurrentUser, async (req, res) => {
   }
 });
 
+/*
+//CREATE USER
+
+userRoute.post("/create", async (req, res) => {
+  try {
+    const newUser = await UserModel.create(req.body);
+    console.log(req.body);
+
+    return res.status(201).json(newUser);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+//GET ALL USERS
+
+userRoute.get("/all", async (req, res) => {
+  try {
+    const users = await UserModel.find({}).populate("tasks").populate("report");
+
+    return res.status(200).json(users);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+//GET SUPERVISOR/
+
+userRoute.get("/role/:typeN", async (req, res) => {
+  try {
+    const { typeN } = req.params;
+    console.log(typeN);
+
+    const user = await UserModel.findById(typeN)
+      .populate("tasks")
+      .populate("report")
+      .populate("manager", "_id name registration");
+
+    if (!user) {
+      return res.status(400).json({ msg: " Usuário não encontrado!" });
+    }
+
+    return res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+//GET user/
+
+userRoute.get("/role/:typeN", async (req, res) => {
+  try {
+    const { typeN } = req.params;
+    console.log(typeN);
+
+    const user = await UserModel.findById(typeN)
+      .populate("tasks")
+      .populate("report")
+      .populate("manager", "_id name registration");
+
+    if (!user) {
+      return res.status(400).json({ msg: " Usuário não encontrado!" });
+    }
+
+    return res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+// EDIT USER
+
+userRoute.put("/edit/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(userId);
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      { _id: userId },
+      { ...req.body },
+      { new: true, runValidators: true }
+    );
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+//DELETE USER
+
+userRoute.delete("/delete/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const deletedUser = await UserModel.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(400).json({ msg: "Usuário não encontrado!" });
+    }
+
+    const users = await UserModel.find();
+    console.log(deletedUser);
+
+    //deletar TODAS as tarefas e avaliações que são do usuário
+    await TaskModel.deleteMany({ user: userId });
+    await ReportModel.deleteMany({ user: userId });
+
+    return res.status(200).json(users);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+*/
 export default userRoute;

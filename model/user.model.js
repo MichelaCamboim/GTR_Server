@@ -6,38 +6,19 @@ import isMobilePhone from "validator/es/lib/isMobilePhone";
 
 const userSchema = new Schema(
   {
-    // required
-    email: {
-      type: String,
-      unique: true,
-      required: true,
-      trim: true,
-      set: normalizeEmail,
-      validate: {
-        validator: (v) => isEmail(v, { domain_specific_validation: true }),
-        message: "Informed e-mail is invalid.",
-      },
-    },
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    passwordHash: { type: String, required: true },
     registration: {
       type: Number,
       unique: true,
-      required: true,
     },
-
-    // optional -> default
-    director: {
-      type: Boolean,
-      default: false,
+    name: {
+      type: String,
+      trim: true,
     },
-    inactive: {
-      type: Boolean,
-      default: false,
+    passwordHash: { type: String, required: true },
+    admission: {
+      type: Date,
+      match:
+        /(?:(?:31(\/|-|\.)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-|\.)(?:0?[13-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-|\.)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})/,
     },
     photo: {
       type: String,
@@ -49,33 +30,17 @@ const userSchema = new Schema(
         message: "Photo's url is invalid.",
       },
     },
-    role: {
+    email: {
       type: String,
-      enum: ["admin", "user", "supervisor", "director"],
-      default: "user",
-    },
-    status: {
-      type: String,
-      enum: ["Active", "Vacation", "Inactive"],
-      default: "Active",
-    },
-    supervisor: {
-      type: Boolean,
-      default: false,
-    },
-
-    // not strictly required at creation
-    admission: Date,
-    codUser: Number,
-    departament: {
-      type: String,
+      unique: true,
+      required: true,
       trim: true,
+      set: normalizeEmail,
+      validate: {
+        validator: (v) => isEmail(v, { domain_specific_validation: true }),
+        message: "Informed e-mail is invalid.",
+      },
     },
-    jobPosition: {
-      type: String,
-      trim: true,
-    },
-    manager: [String],
     phone: {
       type: String,
       trim: true,
@@ -87,12 +52,32 @@ const userSchema = new Schema(
         message: "Telephone number is invalid.",
       },
     },
+    timezone: { type: Number },
+    workHours: { type: Number },
+    department: {
+      type: String,
+      trim: true,
+    },
+    jobPosition: {
+      type: String,
+      trim: true,
+    },
+    skills: [{ type: String }],
+    status: {
+      type: String,
+      enum: ["Active", "Vacation", "Inactive"],
+      default: "Active",
+    },
+    role: {
+      type: String,
+      enum: ["admin", "user", "supervisor", "director"],
+      default: "user",
+    },
+    manager: [{ type: String }],
+    team: [{ type: String }],
     report: [{ type: Schema.Types.ObjectId, ref: "Report" }],
-    skills: [String],
     tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
-    team: [String],
-    timezone: Number,
-    workHours: Number,
+    chat: [{ type: Schema.Types.ObjectId, ref: "Chatbot" }],
   },
   {
     timestamps: true,
