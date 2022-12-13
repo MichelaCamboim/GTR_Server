@@ -91,7 +91,7 @@ reportRoute.put(
     }
   }
 );
-
+/*
 //DELETE
 chatbotRoute.delete(
   "/delete/:reportId",
@@ -126,5 +126,5 @@ chatbotRoute.delete(
     }
   }
 );
-
+*/
 export default reportRoute;
