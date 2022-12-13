@@ -314,29 +314,24 @@ userRoute.get(
   }
 );
 //---------------------------------------//
-// GET FOR USER
+// GET BY ID
 //---------------------------------------//
 
-// se for role= user, só pode ver seus proprios dados
+// ACESSAR UM PERFIL PELO ID
 
-userRoute.get(
-  "/oneUser",
-  isAuth,
-  attachCurrentUser,
-  isUser,
-  async (req, res) => {
-    try {
-      const user = await UserModel.findById(req.currentUser._id)
-        .populate("tasks")
-        .populate("report");
+userRoute.get("/:userId", isAuth, attachCurrentUser, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await UserModel.findById(userId)
+      .populate("tasks")
+      .populate("report");
 
-      return res.status(200).json(user);
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json(error.errors);
-    }
+    return res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
   }
-);
+});
 
 //---------------------------------------//
 // GET FOR SUPERVISOR
