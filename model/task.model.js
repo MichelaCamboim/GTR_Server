@@ -24,7 +24,6 @@ const taskSchema = new Schema(
     // optional
     deadline: {
       type: Date,
-      trim: true,
       get: (v) => {
         return v.toISOString().split("T")[0];
       },
