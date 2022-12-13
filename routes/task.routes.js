@@ -15,11 +15,14 @@ taskRoute.post("/new", isAuth, attachCurrentUser, async (req, res) => {
       author: req.currentUser._id,
     });
 
-    let users = await UserModel.find({ _id: task.members }, { email: 1 });
+    let users = await UserModel.find(
+      { _id: task.members },
+      { email: 1, tasks: 1 }
+    );
     let emails = [];
 
     for (let user of users) {
-      user.push(task._id);
+      user.tasks.push(task._id);
       try {
         await user.save();
         emails.push(user.email);
@@ -36,9 +39,9 @@ taskRoute.post("/new", isAuth, attachCurrentUser, async (req, res) => {
       subject: "[GTR] New Task",
       html: `
           <div>
-            <h1>${task.name} was assigned to you</h1>
-            <p>${task.description}</p>
-            <p>${task.deadline}</p>
+            <h1>New task assigned to you: "${task.name}"</h1>
+            <p>Description: ${task.description}</p>
+            <p>Deadline: ${task.deadline}</p>
           </div>
         `,
     };
