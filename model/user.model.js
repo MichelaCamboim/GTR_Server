@@ -1,11 +1,12 @@
 import { Schema, model } from "mongoose";
 import validator from "validator";
+import cod from "../config/cod.js";
 
 const userSchema = new Schema(
   {
     registration: {
       type: Number,
-      unique: true,
+      default: cod() % 100000000,
     },
     name: {
       type: String,
