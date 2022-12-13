@@ -322,6 +322,7 @@ userRoute.get(
 userRoute.get("/:userId", isAuth, attachCurrentUser, async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log(userId);
     const user = await UserModel.findById(userId)
       .populate("tasks")
       .populate("report");
