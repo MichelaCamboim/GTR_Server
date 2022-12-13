@@ -39,9 +39,9 @@ taskRoute.post("/new", isAuth, attachCurrentUser, async (req, res) => {
       subject: "[GTR] New Task",
       html: `
           <div>
-            <h1>${task.name} was assigned to you</h1>
-            <p>${task.description}</p>
-            <p>${task.deadline}</p>
+            <h1>New task assigned to you: "${task.name}"</h1>
+            <p>Description: ${task.description}</p>
+            <p>Deadline: ${task.deadline}</p>
           </div>
         `,
     };
