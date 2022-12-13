@@ -15,11 +15,14 @@ taskRoute.post("/new", isAuth, attachCurrentUser, async (req, res) => {
       author: req.currentUser._id,
     });
 
-    let users = await UserModel.find({ _id: task.members }, { email: 1 });
+    let users = await UserModel.find(
+      { _id: task.members },
+      { email: 1, tasks: 1 }
+    );
     let emails = [];
 
     for (let user of users) {
-      user.push(task._id);
+      user.tasks.push(task._id);
       try {
         await user.save();
         emails.push(user.email);
