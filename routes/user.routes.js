@@ -1,7 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import generateToken from "../config/jwt.config.js";
-import nodemailer from "../config/mail.config.js";
+//import nodemailer from "../config/mail.config.js";
 
 import UserModel from "../model/user.model.js";
 import TaskModel from "../model/task.model.js";
@@ -21,7 +21,7 @@ const userRoute = express.Router();
 userRoute.post("/sign-up", async (req, res) => {
   try {
     const { password, email } = req.body;
-
+    console.log("rota sig-up");
     if (
       !password ||
       !password.match(
@@ -41,9 +41,10 @@ userRoute.post("/sign-up", async (req, res) => {
       ...req.body,
       passwordHash: hashedPassword,
     });
+    console.log(newUser);
 
     delete newUser._doc.passwordHash;
-
+    /* 
     const mailOptions = {
       from: process.env.EMAIL,
       to: email,
@@ -56,7 +57,7 @@ userRoute.post("/sign-up", async (req, res) => {
               </div>
         `,
     };
-    await transporter.sendMail(mailOptions);
+    //await transporter.sendMail(mailOptions); */
 
     return res.status(201).json(newUser);
   } catch (error) {
@@ -94,9 +95,11 @@ userRoute.get("/activate-account/:idUser", async (req, res) => {
 
 userRoute.post("/login", async (req, res) => {
   try {
+    console.log("rota login");
+
     const { email, password } = req.body;
     const user = await UserModel.findOne({ email: email });
-
+    console.log(user);
     if (!user) {
       return res.status(400).json({
         msg: "The username or password is not correct. Please try again.",
@@ -205,61 +208,69 @@ userRoute.post(
 );
 
 //---------------------------------------//
+// EDIT ONLY FOR DIRECTOR
+//---------------------------------------//
+
+userRoute.put("/edit/:userId", isAuth, isDirector, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(userId);
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      { _id: userId },
+      { ...req.body },
+      { new: true, runValidators: true }
+    );
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+//---------------------------------------//
 // GET ALL
 //---------------------------------------//
 
-userRoute.get(
-  "/allDir",
-  isAuth,
-  attachCurrentUser,
-  isDirector,
-  async (req, res) => {
-    try {
-      const users = await UserModel.find().populate("tasks").populate("report");
+userRoute.get("/all", isAuth, isDirector, async (req, res) => {
+  try {
+    const users = await UserModel.find().populate("tasks").populate("report");
 
-      if (!users) return res.status(400).json({ msg: "Users not found!" });
+    if (!users) return res.status(400).json({ msg: "Users not found!" });
 
-      console.log(users);
+    console.log(users);
 
-      return res.status(200).json(users);
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json(error.errors);
-    }
+    return res.status(200).json(users);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
   }
-);
+});
 
 //---------------------------------------//
 // DELETE USER
 //---------------------------------------//
 
-userRoute.delete(
-  "/delete",
-  isAuth,
-  attachCurrentUser,
-  isDirector,
-  async (req, res) => {
-    try {
-      const deletedUser = await UserModel.findByIdAndDelete(
-        req.currentUser._id
-      );
-      console.log(deletedUser);
+userRoute.delete("/delete", isAuth, isDirector, async (req, res) => {
+  try {
+    const deletedUser = await UserModel.findByIdAndDelete(req.currentUser._id);
+    console.log(deletedUser);
 
-      if (!deletedUser) {
-        return res.status(400).json({ msg: "User not found!" });
-      }
-
-      await TaskModel.deleteMany({ members: req.currentUser._id });
-      await ReportModel.deleteMany({ user: req.currentUser._id });
-      const users = await UserModel.find();
-
-      return res.status(200).json(users);
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json(error.errors);
+    if (!deletedUser) {
+      return res.status(400).json({ msg: "User not found!" });
     }
+
+    await TaskModel.deleteMany({ members: req.currentUser._id });
+    await ReportModel.deleteMany({ user: req.currentUser._id });
+    const users = await UserModel.find();
+
+    return res.status(200).json(users);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
   }
-);
+});
 
 //--------------------------------------------//
 //--------------------------------------------//
@@ -270,22 +281,16 @@ userRoute.delete(
 // GET USER
 //---------------------------------------//
 
-userRoute.get(
-  "/allSuperv",
-  isAuth,
-  attachCurrentUser,
-  isSuperv,
-  async (req, res) => {
-    try {
-      const users = await UserModel.find().populate("tasks").populate("report");
+userRoute.get("/all", isAuth, isSuperv, async (req, res) => {
+  try {
+    const users = await UserModel.find().populate("tasks").populate("report");
 
-      return res.status(200).json(users);
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json(error.errors);
-    }
+    return res.status(200).json(users);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
   }
-);
+});
 
 //---------------------------------------//
 // EDIT ROLE: USER, ALLOWED FOR SUPERV OR DIR
