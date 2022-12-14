@@ -91,7 +91,7 @@ reportRoute.put(
     }
   }
 );
-/* 
+
 //DELETE
 chatbotRoute.delete(
   "/delete/:reportId",
@@ -112,7 +112,7 @@ chatbotRoute.delete(
       const user = await UserModel.findByIdAndUpdate(
         deletedReport.user,
         {
-          $pull: { report: newReport._id },
+          $pull: { report: deletedReport._id },
         },
         { new: true, runValidators: true }
       );
@@ -126,5 +126,5 @@ chatbotRoute.delete(
     }
   }
 );
- */
+
 export default reportRoute;
