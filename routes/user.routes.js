@@ -9,9 +9,7 @@ import ReportModel from "../model/report.model.js";
 
 import isAuth from "../middleware/isAuth.js";
 import attachCurrentUser from "../middleware/attachCurrentUser.js";
-import isDirector from "../middleware/isDirector.js";
 import isSuperv from "../middleware/isSuperv.js";
-import isUser from "../middleware/isUser.js";
 
 const userRoute = express.Router();
 
@@ -101,7 +99,9 @@ userRoute.post("/login", async (req, res) => {
     const { email, password } = req.body;
     const user = await UserModel.findOne({ email: email })
       .populate("team", "_id registration name")
-      .populate("manager", "_id registration name");
+      .populate("manager", "_id registration name")
+      .populate("tasks")
+      .populate("report");
     console.log(user);
     if (!user) {
       return res.status(400).json({
@@ -176,7 +176,7 @@ userRoute.post(
   "/create",
   isAuth,
   attachCurrentUser,
-  isDirector,
+  isSuperv,
   async (req, res) => {
     try {
       const { password } = req.body;
@@ -214,7 +214,7 @@ userRoute.post(
 // EDIT ONLY FOR DIRECTOR
 //---------------------------------------//
 
-userRoute.put("/edit/:userId", isAuth, isDirector, async (req, res) => {
+userRoute.put("/edit/:userId", isAuth, isSuperv, async (req, res) => {
   try {
     const { userId } = req.params;
     console.log(userId);
@@ -237,30 +237,26 @@ userRoute.put("/edit/:userId", isAuth, isDirector, async (req, res) => {
 //---------------------------------------//
 
 // se for role = director, pode ver todo mundo, menos o seu dado.
-userRoute.get(
-  "/all",
-  isAuth,
-  attachCurrentUser,
-  isDirector,
-  async (req, res) => {
-    try {
-      const dir = req.currentUser._id;
-      const user = await UserModel.find({ dir: { $ne: req.currentUser._id } })
-        .populate("tasks")
-        .populate("report");
+userRoute.get("/all", isAuth, attachCurrentUser, isSuperv, async (req, res) => {
+  try {
+    const dir = req.currentUser._id;
+    const user = await UserModel.find({ dir: { $ne: req.currentUser._id } })
+      .populate("team", "_id registration name")
+      .populate("manager", "_id registration name")
+      .populate("tasks")
+      .populate("report");
 
-      return res.status(200).json(user);
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json(error.errors);
-    }
+    return res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
   }
-);
+});
 //---------------------------------------//
 // DELETE USER
 //---------------------------------------//
 
-userRoute.delete("/delete", isAuth, isDirector, async (req, res) => {
+userRoute.delete("/delete", isAuth, isSuperv, async (req, res) => {
   try {
     const deletedUser = await UserModel.findByIdAndDelete(req.currentUser._id);
     console.log(deletedUser);
@@ -280,6 +276,30 @@ userRoute.delete("/delete", isAuth, isDirector, async (req, res) => {
   }
 });
 
+//---------------------------------------//
+// GET BY ID
+//---------------------------------------//
+
+// ACESSAR UM PERFIL PELO ID
+
+userRoute.get("/:userId", isAuth, attachCurrentUser, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(userId);
+    console.log(req.params);
+
+    const user = await UserModel.findById(userId)
+      .populate("tasks")
+      .populate("report");
+
+    return res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+/*
 //---------------------------------------//
 // SET GROUP
 //---------------------------------------//
@@ -314,27 +334,6 @@ userRoute.get(
   }
 );
 //---------------------------------------//
-// GET BY ID
-//---------------------------------------//
-
-// ACESSAR UM PERFIL PELO ID
-
-userRoute.get("/:userId", isAuth, async (req, res) => {
-  try {
-    const  userId  = req.body._id;
-    console.log(userId);
-    const user = await UserModel.findById(userId)
-      .populate("tasks")
-      .populate("report");
-
-    return res.status(200).json(user);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
-  }
-});
-
-//---------------------------------------//
 // GET FOR SUPERVISOR
 //---------------------------------------//
 
@@ -348,6 +347,7 @@ userRoute.get(
   async (req, res) => {
     try {
       const user = await UserModel.find({ manager: req.currentUser._id })
+        .populate("team", "_id registration name")
         .populate("tasks")
         .populate("report");
 
@@ -358,9 +358,6 @@ userRoute.get(
     }
   }
 );
-
-/*
-
 
 ///------------------------------------------------
 
