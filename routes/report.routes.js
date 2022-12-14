@@ -4,7 +4,7 @@ import UserModel from "../model/user.model.js";
 
 import isAuth from "../middleware/isAuth.js";
 import attachCurrentUser from "../middleware/attachCurrentUser.js";
-import isDirector from "../middleware/isDirector.js";
+import isSuperv from "../middleware/isSuperv.js";
 
 const reportRoute = express.Router();
 
@@ -72,7 +72,7 @@ reportRoute.put(
   "/edit/:reportId",
   isAuth,
   attachCurrentUser,
-  isDirector,
+  isSuperv,
   async (req, res) => {
     try {
       const { reportId } = req.params;
