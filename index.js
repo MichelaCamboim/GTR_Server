@@ -9,7 +9,7 @@ import mytasksRoute from "./routes/mytasks.routes.js";
 
 import reportRoute from "./routes/report.routes.js";
 //import chatbotRoute from "./routes/chatbot.routes.js";
-
+import activityRoute from "./routes/activity.routes.js";
 import logRoute from "./routes/log.routes.js";
 import uploadRoute from "./routes/uploadFile.routes.js";
 
@@ -21,6 +21,7 @@ connect();
 
 app.use("/user", userRoute);
 app.use("/task", taskRoute);
+app.use("/activity", activityRoute);
 app.use("/mytasks", mytasksRoute);
 app.use("/report", reportRoute);
 //app.use("/chatbot", chatbotRoute);
