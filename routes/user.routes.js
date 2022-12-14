@@ -319,9 +319,9 @@ userRoute.get(
 
 // ACESSAR UM PERFIL PELO ID
 
-userRoute.get("/:userId", isAuth, attachCurrentUser, async (req, res) => {
+userRoute.get("/:userId", isAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const  userId  = req.body._id;
     console.log(userId);
     const user = await UserModel.findById(userId)
       .populate("tasks")
