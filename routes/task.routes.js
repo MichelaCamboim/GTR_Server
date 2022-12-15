@@ -4,7 +4,6 @@ import TaskModel from "../model/task.model.js";
 import UserModel from "../model/user.model.js";
 import isAuth from "../middleware/isAuth.js";
 import attachCurrentUser from "../middleware/attachCurrentUser.js";
-import Mongoose from "mongoose";
 
 const taskRoute = express.Router();
 
@@ -55,16 +54,18 @@ taskRoute.post("/new", isAuth, attachCurrentUser, async (req, res) => {
   }
 });
 
-taskRoute.get("/all", isAuth, attachCurrentUser, async (_, res) => {
+taskRoute.get("/all", isAuth, attachCurrentUser, async (req, res) => {
   let ids;
 
-  if (req.user.role === "user") {
-    ids = req.user.role; // get user tasks ids
+  if (req.currentUser.role === "user") {
+    ids = req.currentUser.role; // get user tasks ids
   } else {
-    let users = req.user.team; // get team's tasks ids
+    let users = req.currentUser.team; // get team's tasks ids
 
     if (!users)
-      return res.status(200).json({ msg: `${req.user.role}'s team is empty.` });
+      return res
+        .status(200)
+        .json({ msg: `${req.currentUser.role}'s team is empty.` });
 
     let tasks = await UserModel.find({ _id: { $in: users } }, { tasks: 1 });
     ids = tasks.reduce((acc, { tasks }) => {
@@ -74,12 +75,17 @@ taskRoute.get("/all", isAuth, attachCurrentUser, async (_, res) => {
   }
 
   try {
-    const tasks = await TaskModel.find({ _id: ids }, { __v: 0 })
+    const tasks = await TaskModel.find(
+      { _id: ids },
+      { __v: 0 },
+      { sort: { deadline: 1, priority: 1 } }
+    )
       .populate("members", "_id name registration")
       .populate("author", "_id name registration")
       .populate("activities");
     return res.status(200).json(tasks);
   } catch (error) {
+    console.log(error);
     return res.status(500).json(error.errors);
   }
 });
@@ -95,6 +101,7 @@ taskRoute.get("/:taskId", isAuth, async (req, res) => {
 
     return res.status(200).json(task);
   } catch (error) {
+    console.log(error);
     return res.status(400).json(error.errors);
   }
 });
