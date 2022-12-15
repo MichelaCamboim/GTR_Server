@@ -135,12 +135,7 @@ userRoute.post("/login", async (req, res) => {
 
 userRoute.get("/profile", isAuth, attachCurrentUser, async (req, res) => {
   try {
-    const user = await UserModel.findOne(req.currentUser)
-      .populate("team", "_id registration name")
-      .populate("manager", "_id registration name")
-      .populate("tasks")
-      .populate("report");
-    return res.status(200).json(user);
+    return res.status(200).json(req.currentUser);
   } catch (error) {
     console.log(error);
     return res.status(500).json(error.errors);
