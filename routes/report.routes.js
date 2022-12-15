@@ -121,6 +121,7 @@ reportRoute.put(
 ​
 //DELETE
 reportRoute.delete(
+
   "/delete/:reportId",
   isAuth,
   attachCurrentUser,

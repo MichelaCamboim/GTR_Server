@@ -135,7 +135,12 @@ userRoute.post("/login", async (req, res) => {
 
 userRoute.get("/profile", isAuth, attachCurrentUser, async (req, res) => {
   try {
-    return res.status(200).json(req.currentUser);
+    const user = await UserModel.findOne(req.currentUser)
+      .populate("team", "_id registration name")
+      .populate("manager", "_id registration name")
+      .populate("tasks")
+      .populate("report");
+    return res.status(200).json(user);
   } catch (error) {
     console.log(error);
     return res.status(500).json(error.errors);
@@ -256,17 +261,18 @@ userRoute.get("/all", isAuth, attachCurrentUser, isSuperv, async (req, res) => {
 // DELETE USER
 //---------------------------------------//
 
-userRoute.delete("/delete", isAuth, isSuperv, async (req, res) => {
+userRoute.delete("/delete/:userId", isAuth, isSuperv, async (req, res) => {
   try {
-    const deletedUser = await UserModel.findByIdAndDelete(req.currentUser._id);
+    const { userId } = req.params;
+    const deletedUser = await UserModel.findByIdAndDelete(userId);
     console.log(deletedUser);
 
     if (!deletedUser) {
       return res.status(400).json({ msg: "User not found!" });
     }
 
-    await TaskModel.deleteMany({ members: req.currentUser._id });
-    await ReportModel.deleteMany({ user: req.currentUser._id });
+    await TaskModel.deleteMany({ members: userId });
+    await ReportModel.deleteMany({ user: userId });
     const users = await UserModel.find();
 
     return res.status(200).json(users);
@@ -277,10 +283,37 @@ userRoute.delete("/delete", isAuth, isSuperv, async (req, res) => {
 });
 
 //---------------------------------------//
-// GET BY ID
+// SUVERVISOR GET BY ID DO USER
 //---------------------------------------//
 
-// ACESSAR UM PERFIL PELO ID
+userRoute.get(
+  "/one/:userId",
+  isAuth,
+  attachCurrentUser,
+  isSuperv,
+  async (req, res) => {
+    try {
+      const { userId } = req.params;
+      console.log(userId);
+      console.log(req.params);
+
+      const user = await UserModel.findById(userId)
+        .populate("tasks")
+        .populate("report");
+
+      return res.status(200).json(user);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json(error.errors);
+    }
+  }
+);
+
+//---------------------------------------//
+// GET BY ID USER ACESSANDO O
+//---------------------------------------//
+
+// ACESSAR PRÓPRIO PERFIL
 
 userRoute.get("/:userId", isAuth, attachCurrentUser, async (req, res) => {
   try {
