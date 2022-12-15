@@ -92,7 +92,7 @@ reportRoute.put(
   }
 );
 
-//DELETE
+/* //DELETE
 chatbotRoute.delete(
   "/delete/:reportId",
   isAuth,
@@ -125,6 +125,6 @@ chatbotRoute.delete(
       return res.status(500).json(error.errors);
     }
   }
-);
+); */
 
 export default reportRoute;
