@@ -4,6 +4,7 @@ import ActivityModel from "../model/activity.model.js";
 import UserModel from "../model/user.model.js";
 import isAuth from "../middleware/isAuth.js";
 import attachCurrentUser from "../middleware/attachCurrentUser.js";
+import TaskModel from "../model/task.model.js";
 
 const activityRoute = express.Router();
 
@@ -13,7 +14,9 @@ activityRoute.post("/new", isAuth, attachCurrentUser, async (req, res) => {
       ...req.body,
       author: req.currentUser._id,
     });
-
+    await TaskModel.findByIdAndUpdate(req.body.id, {
+      $push: { activities: activity },
+    });
     return res
       .status(201)
       .json({ activity, msg: "Activity successfuly registred." });
