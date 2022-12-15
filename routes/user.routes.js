@@ -135,7 +135,12 @@ userRoute.post("/login", async (req, res) => {
 
 userRoute.get("/profile", isAuth, attachCurrentUser, async (req, res) => {
   try {
-    return res.status(200).json(req.currentUser);
+    const user = await UserModel.findOne(req.currentUser)
+      .populate("team", "_id registration name")
+      .populate("manager", "_id registration name")
+      .populate("tasks")
+      .populate("report");
+    return res.status(200).json(user);
   } catch (error) {
     console.log(error);
     return res.status(500).json(error.errors);
@@ -281,24 +286,28 @@ userRoute.delete("/delete/:userId", isAuth, isSuperv, async (req, res) => {
 // SUVERVISOR GET BY ID DO USER
 //---------------------------------------//
 
+userRoute.get(
+  "/one/:userId",
+  isAuth,
+  attachCurrentUser,
+  isSuperv,
+  async (req, res) => {
+    try {
+      const { userId } = req.params;
+      console.log(userId);
+      console.log(req.params);
 
-userRoute.get("/one/:userId", isAuth, attachCurrentUser, isSuperv, async (req, res) => {
-  try {
-    const { userId } = req.params;
-    console.log(userId);
-    console.log(req.params);
+      const user = await UserModel.findById(userId)
+        .populate("tasks")
+        .populate("report");
 
-    const user = await UserModel.findById(userId)
-      .populate("tasks")
-      .populate("report");
-
-    return res.status(200).json(user);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
+      return res.status(200).json(user);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json(error.errors);
+    }
   }
-});
-
+);
 
 //---------------------------------------//
 // GET BY ID USER ACESSANDO O
