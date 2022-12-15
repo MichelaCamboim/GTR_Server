@@ -28,19 +28,6 @@ const taskSchema = new Schema(
         return v.toISOString().split("T")[0];
       },
       default: () => new Date().toISOString().split("T")[0],
-      validate: {
-        validator: function (v) {
-          let today = new Date();
-          today.setUTCHours(0, 0, 0, 0);
-
-          if (v < today)
-            throw new Error(
-              "A data de prazo final deve ser maior que a data de início."
-            );
-
-          return true;
-        },
-      },
     },
     estimated: {
       type: String,
