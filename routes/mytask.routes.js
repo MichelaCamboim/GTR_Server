@@ -2,24 +2,66 @@ import express from "express";
 import mongoose from "mongoose";
 import TaskModel from "../model/task.model.js";
 import UserModel from "../model/user.model.js";
+import isAuth from "../middleware/isAuth.js";
+import attachCurrentUser from "../middleware/attachCurrentUser.js";
+import isSuperv from "../middleware/isSuperv.js";
 
-const mytasksRoute = express.Router();
 
-mytasksRoute.post("/new", async (req, res) => {
+
+const mytaskRoute = express.Router();
+
+mytaskRoute.get("/notassigned", isAuth, attachCurrentUser, async (req, res) => {
+ 
+ try {
+    const tasks = await TaskModel.find(
+      {members: []} ,
+      { __v: 0 },
+      { sort: { deadline: 1, priority: 1 } }
+    )
+    return res.status(200).json(tasks);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+
+
+mytaskRoute.get("/my", isAuth, attachCurrentUser, async (req, res) => {
+  const myId = req.currentUser._id;   
+     
+  try {
+    const tasks = await TaskModel.find(
+      { members: ObjectId(myId) },
+      { __v: 0 },
+      { sort: { deadline: 1, priority: 1 } }
+    )
+    return res.status(200).json(tasks);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
+
+
+
+
+
+mytaskRoute.post("/new", async (req, res) => {
+  const id =req.currentUser.id;    
   try {
     const task = await TaskModel.create({
       ...req.body,
-      priority: "regular",
       author: req.currentUser._id,
     });
 
-    let user = await UserModel.find(
-      { _id: req.currentUser._id },
+    let users = await UserModel.find(
+      { _id: task.members },
       { email: 1, tasks: 1 }
     );
     let emails = [];
 
-   
+    for (let user of users) {
       user.tasks.push(task._id);
       try {
         await user.save();
@@ -29,9 +71,7 @@ mytasksRoute.post("/new", async (req, res) => {
           .status(500)
           .json({ msg: "error at adding task to all users", log: e.error });
       }
-    
-
-
+    }
 
     const mailOptions = {
       from: process.env.EMAIL, //nosso email
@@ -55,15 +95,15 @@ mytasksRoute.post("/new", async (req, res) => {
   }
 });
 
-mytasksRoute.get("/worked_hours/:init/:end", async (req, res) => {
+mytaskRoute.get("/worked_hours/:init/:end", async (req, res) => {
   console.log(req.params.init)
   console.log(req.params.end)
 });
 
-mytasksRoute.get("/outoftime", async (req, res) => {
+mytaskRoute.get("/outoftime", async (req, res) => {
 })
 
-mytasksRoute.get("/status/:type", async (req, res) => {
+mytaskRoute.get("/status/:type", async (req, res) => {
   try {
     const tasks = await TaskModel.find(
       { status: req.params.type },
@@ -76,4 +116,4 @@ mytasksRoute.get("/status/:type", async (req, res) => {
 
 });
 
-export default mytasksRoute;
+export default mytaskRoute;
