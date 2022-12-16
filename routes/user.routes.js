@@ -148,6 +148,9 @@ userRoute.get("/profile", isAuth, attachCurrentUser, async (req, res) => {
 
 userRoute.put("/edit", isAuth, attachCurrentUser, async (req, res) => {
   try {
+    console.log(req.body);
+    console.log("estou no edit do user");
+
     const updatedUser = await UserModel.findByIdAndUpdate(
       req.currentUser._id,
       { ...req.body },
@@ -216,11 +219,13 @@ userRoute.post(
 
 userRoute.put("/edit/:userId", isAuth, isSuperv, async (req, res) => {
   try {
+    console.log(req.body);
+    console.log("estou no edit do chefe");
+
     const { userId } = req.params;
-    console.log(userId);
 
     const updatedUser = await UserModel.findByIdAndUpdate(
-      { _id: userId },
+      userId,
       { ...req.body },
       { new: true, runValidators: true }
     );
@@ -266,11 +271,10 @@ userRoute.delete("/delete/:userId", isAuth, isSuperv, async (req, res) => {
       return res.status(400).json({ msg: "User not found!" });
     }
 
-    await TaskModel.deleteMany({ members: userId });
+    await TaskModel.deleteMany({ $pull: { members: userId } });
     await ReportModel.deleteMany({ user: userId });
-    const users = await UserModel.find();
 
-    return res.status(200).json(users);
+    return res.status(200).json();
   } catch (error) {
     console.log(error);
     return res.status(500).json(error.errors);
