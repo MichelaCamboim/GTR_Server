@@ -1,11 +1,14 @@
 import express from "express";
 import ReportModel from "../model/report.model.js";
 import UserModel from "../model/user.model.js";
+
 import isAuth from "../middleware/isAuth.js";
 import attachCurrentUser from "../middleware/attachCurrentUser.js";
 import isSuperv from "../middleware/isSuperv.js";
 import isDirector from "../middleware/isDirector.js";
+
 const reportRoute = express.Router();
+
 //CREATE REPORT
 reportRoute.post(
   "/create-report",
@@ -17,6 +20,7 @@ reportRoute.post(
         ...req.body,
         avaliador: req.currentUser._id,
       });
+
       //Inserir o usuario a ser avaliado
       const user = await UserModel.findByIdAndUpdate(
         req.body.avaliado,
@@ -33,10 +37,12 @@ reportRoute.post(
     }
   }
 );
+
 //GET ALL
 reportRoute.get("/all", isAuth, attachCurrentUser, async (req, res) => {
   try {
     const reports = await ReportModel.find().populate("avaliado");
+
     return res.status(200).json(reports);
   } catch (error) {
     console.log(error);
@@ -44,11 +50,9 @@ reportRoute.get("/all", isAuth, attachCurrentUser, async (req, res) => {
   }
 });
 
-reportRoute.get("/avaliado", isAuth, attachCurrentUser, async (req, res) => {
+reportRoute.get("/avaliado/", isAuth, attachCurrentUser, async (req, res) => {
   try {
-    const reports = await ReportModel.find({
-      avaliado: req.currentUser._id,
-    }).populate("avaliador");
+    const reports = await ReportModel.find({ avaliado: req.currentUser._id });
 
     return res.status(200).json(reports);
   } catch (error) {
@@ -58,7 +62,7 @@ reportRoute.get("/avaliado", isAuth, attachCurrentUser, async (req, res) => {
 });
 
 reportRoute.get(
-  "/avaliador",
+  "/avaliador/",
   isAuth,
   attachCurrentUser,
   isSuperv,
@@ -66,7 +70,7 @@ reportRoute.get(
     try {
       const reports = await ReportModel.find({
         avaliador: req.currentUser._id,
-      }).populate("avaliado");
+      });
 
       return res.status(200).json(reports);
     } catch (error) {
@@ -81,6 +85,7 @@ reportRoute.get(
   "/oneReport/:reportId",
   isAuth,
   attachCurrentUser,
+  isAuth,
   async (req, res) => {
     try {
       const { reportId } = req.params;
@@ -93,6 +98,7 @@ reportRoute.get(
     }
   }
 );
+
 //UPDATE
 reportRoute.put(
   "/edit/:reportId",
@@ -103,6 +109,7 @@ reportRoute.put(
     try {
       const { reportId } = req.params;
       console.log(reportId);
+
       const updatedReport = await ReportModel.findByIdAndUpdate(
         { _id: reportId },
         { ...req.body },
@@ -122,7 +129,7 @@ reportRoute.delete(
   "/delete/:reportId",
   isAuth,
   attachCurrentUser,
-  isSuperv,
+  isDirector,
   async (req, res) => {
     try {
       const { reportId } = req.params;
