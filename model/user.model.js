@@ -6,7 +6,7 @@ const userSchema = new Schema(
   {
     registration: {
       type: Number,
-      default: cod() % 100000000,
+      default: () => cod() % 100000000,
     },
     name: {
       type: String,

@@ -168,6 +168,29 @@ userRoute.get("/all", isAuth, attachCurrentUser, isSuperv, async (req, res) => {
     return res.status(500).json(error.errors);
   }
 });
+//---------------------------------------//
+// DELETE USER
+//---------------------------------------//
+
+userRoute.delete("/delete/:userId", isAuth, isSuperv, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const deletedUser = await UserModel.findByIdAndDelete(userId);
+    console.log(deletedUser);
+
+    if (!deletedUser) {
+      return res.status(400).json({ msg: "User not found!" });
+    }
+
+    await TaskModel.updateMany({ $pull: { members: userId } });
+    await ReportModel.deleteMany({ user: userId });
+
+    return res.status(200).json();
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.errors);
+  }
+});
 
 //---------------------------------------//
 // SUVERVISOR GET BY ID DO USER
@@ -257,30 +280,6 @@ userRoute.put("/edit/:userId", isAuth, isSuperv, async (req, res) => {
     );
 
     return res.status(200).json(updatedUser);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
-  }
-});
-
-//---------------------------------------//
-// DELETE USER BYID
-//---------------------------------------//
-
-userRoute.delete("/delete/:userId", isAuth, isSuperv, async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const deletedUser = await UserModel.findByIdAndDelete(userId);
-    console.log(deletedUser);
-
-    if (!deletedUser) {
-      return res.status(400).json({ msg: "User not found!" });
-    }
-
-    await TaskModel.deleteMany({ $pull: { members: userId } });
-    await ReportModel.deleteMany({ user: userId });
-
-    return res.status(200).json();
   } catch (error) {
     console.log(error);
     return res.status(500).json(error.errors);
