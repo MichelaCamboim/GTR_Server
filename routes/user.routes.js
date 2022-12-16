@@ -1,7 +1,6 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import generateToken from "../config/jwt.config.js";
-//import nodemailer from "../config/mail.config.js";
 
 import UserModel from "../model/user.model.js";
 import TaskModel from "../model/task.model.js";
@@ -43,20 +42,6 @@ userRoute.post("/sign-up", async (req, res) => {
     console.log(newUser);
 
     delete newUser._doc.passwordHash;
-    /* 
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: email,
-      subject: "[GTR] Ativação de Conta",
-      html: `
-          <div>
-            <h1>${newUser.name} Welcome to our website. </h1>
-            <p>Please, confirm your email by clicking on the link below</p>
-            <a href=${process.env.SERVER_URL}/user/activate-account/${newUser._id}>ATIVE SUA CONTA</a>
-              </div>
-        `,
-    };
-    //await transporter.sendMail(mailOptions); */
 
     return res.status(201).json(newUser);
   } catch (error) {
@@ -65,32 +50,9 @@ userRoute.post("/sign-up", async (req, res) => {
   }
 });
 
-/* //------------------------------------------------------//
-// ACTIVATE ACCOUNT
-//-----------------------------------------------------//
-
-userRoute.get("/activate-account/:idUser", async (req, res) => {
-  try {
-    const { idUser } = req.params;
-
-    const user = await UserModel.findByIdAndUpdate(idUser, {
-      confirmEmail: true,
-    });
-
-    console.log(user);
-
-    return res.send(
-      `Your account has been successfully activated, ${user.name}`
-    );
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
-  }
-}); */
-
-//------------------------------------------------------//
-// LOGIN PAGE : ONLY REGISTERED AND CONFIRMED USERS ARE ALLOWED
-//-----------------------------------------------------//
+//--------------------------------//
+// LOGIN PAGE
+//--------------------------------//
 
 userRoute.post("/login", async (req, res) => {
   try {
@@ -143,33 +105,6 @@ userRoute.get("/profile", isAuth, attachCurrentUser, async (req, res) => {
 });
 
 //---------------------------------------//
-// EDIT
-//---------------------------------------//
-
-userRoute.put("/edit", isAuth, attachCurrentUser, async (req, res) => {
-  try {
-    console.log(req.body);
-    console.log("estou no edit do user");
-
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      req.currentUser._id,
-      { ...req.body },
-      { new: true, runValidators: true }
-    );
-
-    return res.status(200).json(updatedUser);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
-  }
-});
-
-//---------------------------------------//
-//---------------------------------------//
-// ROUTES ONLY DIRECTOR AUTHORIZED
-//---------------------------------------//
-
-//---------------------------------------//
 // CREATE USER
 //---------------------------------------//
 
@@ -214,31 +149,7 @@ userRoute.post(
 );
 
 //---------------------------------------//
-// EDIT ONLY FOR DIRECTOR
-//---------------------------------------//
-
-userRoute.put("/edit/:userId", isAuth, isSuperv, async (req, res) => {
-  try {
-    console.log(req.body);
-    console.log("estou no edit do chefe");
-
-    const { userId } = req.params;
-
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      userId,
-      { ...req.body },
-      { new: true, runValidators: true }
-    );
-
-    return res.status(200).json(updatedUser);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
-  }
-});
-
-//---------------------------------------//
-// GET ALL
+// SUPERVISOR GET ALL
 //---------------------------------------//
 
 // se for role = director, pode ver todo mundo, menos o seu dado.
@@ -309,10 +220,8 @@ userRoute.get(
 );
 
 //---------------------------------------//
-// GET BY ID USER ACESSANDO O
+// GET OWN PROFILE
 //---------------------------------------//
-
-// ACESSAR PRÓPRIO PERFIL
 
 userRoute.get("/:userId", isAuth, attachCurrentUser, async (req, res) => {
   try {
@@ -331,150 +240,17 @@ userRoute.get("/:userId", isAuth, attachCurrentUser, async (req, res) => {
   }
 });
 
-/*
 //---------------------------------------//
-// SET GROUP
-//---------------------------------------//
-
-userRoute.get(
-  "/groups",
-  isAuth,
-  attachCurrentUser,
-  isDirector,
-  async (req, res) => {
-    try {
-      const users = await UserModel.find().populate("tasks").populate("report");
-
-      users.forEach(async (user) => {
-        if (user.role === "supervisor") {
-          await UserModel.findByIdAndUpdate(req.currentUser._id, {
-            $push: { manager: user._id },
-          });
-        }
-        if (user.role === "user") {
-          await UserModel.findByIdAndUpdate(req.currentUser._id, {
-            $push: { team: user._id },
-          });
-        }
-      });
-
-      return res.status(200).json(users);
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json(error.errors);
-    }
-  }
-);
-//---------------------------------------//
-// GET FOR SUPERVISOR
+// EDIT OWN PROFILE
 //---------------------------------------//
 
-// se for role= supervisor, só pode ver os usuários, cujo manager é ele mesmo.
-
-userRoute.get(
-  "/all-superv",
-  isAuth,
-  attachCurrentUser,
-  isSuperv,
-  async (req, res) => {
-    try {
-      const user = await UserModel.find({ manager: req.currentUser._id })
-        .populate("team", "_id registration name")
-        .populate("tasks")
-        .populate("report");
-
-      return res.status(201).json(user);
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json(error.errors);
-    }
-  }
-);
-
-///------------------------------------------------
-
-//CREATE USER
-
-userRoute.post("/create", async (req, res) => {
+userRoute.put("/edit", isAuth, attachCurrentUser, async (req, res) => {
   try {
-    const newUser = await UserModel.create(req.body);
     console.log(req.body);
-
-    return res.status(201).json(newUser);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
-  }
-});
-
-//GET ALL USERS
-
-userRoute.get("/all", async (req, res) => {
-  try {
-    const users = await UserModel.find({}).populate("tasks").populate("report");
-
-    return res.status(200).json(users);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
-  }
-});
-
-//GET SUPERVISOR/
-
-userRoute.get("/role/:typeN", async (req, res) => {
-  try {
-    const { typeN } = req.params;
-    console.log(typeN);
-
-    const user = await UserModel.findById(typeN)
-      .populate("tasks")
-      .populate("report")
-      .populate("manager", "_id name registration");
-
-    if (!user) {
-      return res.status(400).json({ msg: " Usuário não encontrado!" });
-    }
-
-    return res.status(200).json(user);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
-  }
-});
-
-//GET user/
-
-userRoute.get("/role/:typeN", async (req, res) => {
-  try {
-    const { typeN } = req.params;
-    console.log(typeN);
-
-    const user = await UserModel.findById(typeN)
-      .populate("tasks")
-      .populate("report")
-      .populate("manager", "_id name registration");
-
-    if (!user) {
-      return res.status(400).json({ msg: " Usuário não encontrado!" });
-    }
-
-    return res.status(200).json(user);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error.errors);
-  }
-});
-
-// EDIT USER
-
-userRoute.put("/edit/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
-    console.log(userId);
+    console.log("estou no edit do user");
 
     const updatedUser = await UserModel.findByIdAndUpdate(
-      { _id: userId },
+      req.currentUser._id,
       { ...req.body },
       { new: true, runValidators: true }
     );
@@ -486,30 +262,28 @@ userRoute.put("/edit/:userId", async (req, res) => {
   }
 });
 
-//DELETE USER
+//---------------------------------------//
+// EDIT BYID FOR SUPERVISOR
+//---------------------------------------//
 
-userRoute.delete("/delete/:userId", async (req, res) => {
+userRoute.put("/edit/:userId", isAuth, isSuperv, async (req, res) => {
   try {
+    console.log(req.body);
+    console.log("estou no edit do chefe");
+
     const { userId } = req.params;
 
-    const deletedUser = await UserModel.findByIdAndDelete(userId);
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      { ...req.body },
+      { new: true, runValidators: true }
+    );
 
-    if (!deletedUser) {
-      return res.status(400).json({ msg: "Usuário não encontrado!" });
-    }
-
-    const users = await UserModel.find();
-    console.log(deletedUser);
-
-    //deletar TODAS as tarefas e avaliações que são do usuário
-    await TaskModel.deleteMany({ user: userId });
-    await ReportModel.deleteMany({ user: userId });
-
-    return res.status(200).json(users);
+    return res.status(200).json(updatedUser);
   } catch (error) {
     console.log(error);
     return res.status(500).json(error.errors);
   }
 });
-*/
+
 export default userRoute;

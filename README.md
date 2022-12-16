@@ -7,6 +7,7 @@ Aplicação Back End construída em Node utilizando o framework express e Banco 
 ## Links
 Github Front End: https://github.com/stroligo/GTR_FRONT.git
 ### DEPLOY: https://gtr-project.netlify.app/
+#### Apresentação: https://docs.google.com/presentation/d/1v-2YwX85RUUzihdvvVfzB1DgiMQ2O1i2imlc5_SDp24/edit?usp=sharing
 
 
 # Solução desenvolvida por:
