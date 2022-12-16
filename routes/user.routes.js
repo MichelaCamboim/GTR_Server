@@ -271,7 +271,7 @@ userRoute.delete("/delete/:userId", isAuth, isSuperv, async (req, res) => {
       return res.status(400).json({ msg: "User not found!" });
     }
 
-    await TaskModel.deleteMany({ $pull: { members: userId } });
+    await TaskModel.UpdateMany({ $pull: { members: userId } });
     await ReportModel.deleteMany({ user: userId });
 
     return res.status(200).json();

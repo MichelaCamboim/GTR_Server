@@ -58,7 +58,7 @@ taskRoute.get("/all", isAuth, attachCurrentUser, async (req, res) => {
   let ids;
 
   if (req.currentUser.role === "user") {
-    ids = req.currentUser.role; // get user tasks ids
+    ids = req.currentUser.tasks.map((task) => task._id); // get user's tasks ids
   } else {
     let users = req.currentUser.team; // get team's tasks ids
 
@@ -76,13 +76,14 @@ taskRoute.get("/all", isAuth, attachCurrentUser, async (req, res) => {
 
   try {
     const tasks = await TaskModel.find(
-      { _id: ids },
+      { $or: [{ _id: ids }, { author: req.currentUser._id }] },
       { __v: 0 },
       { sort: { deadline: 1, priority: 1 } }
     )
       .populate("members", "_id name registration")
       .populate("author", "_id name registration")
       .populate("activities");
+
     return res.status(200).json(tasks);
   } catch (error) {
     console.log(error);
